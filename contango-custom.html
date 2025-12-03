@@ -1081,23 +1081,39 @@
 
     // Check token allowance
     async function checkAllowance() {
-      if (!signer || !account || !quoteTokenInfo.address) return;
+      if (!signer || !account) return;
 
       try {
-        const tokenContract = new ethers.Contract(quoteTokenInfo.address, ERC20_ABI, provider);
-        const allowance = await tokenContract.allowance(account, CONTANGO_PROXY);
         const cashflow = document.getElementById('cashflow').value || '0';
         const cashflowCcy = document.getElementById('cashflowCcy').value;
 
-        // Only need approval if paying with quote token
-        if (cashflowCcy === '1' && parseFloat(cashflow) > 0) {
-          const cashflowWei = ethers.utils.parseUnits(cashflow, quoteTokenInfo.decimals);
+        // Determine which token needs approval
+        let tokenInfo, tokenAddress;
+        if (cashflowCcy === '0') {
+          // Base token
+          if (!baseTokenInfo.address) return;
+          tokenInfo = baseTokenInfo;
+          tokenAddress = baseTokenInfo.address;
+        } else {
+          // Quote token
+          if (!quoteTokenInfo.address) return;
+          tokenInfo = quoteTokenInfo;
+          tokenAddress = quoteTokenInfo.address;
+        }
+
+        if (parseFloat(cashflow) > 0) {
+          const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+          const allowance = await tokenContract.allowance(account, CONTANGO_PROXY);
+          const cashflowWei = ethers.utils.parseUnits(cashflow, tokenInfo.decimals);
 
           if (allowance.lt(cashflowWei)) {
             // Need approval
-            document.getElementById('approvalTokenName').textContent = quoteTokenInfo.symbol;
-            document.getElementById('approvalTokenSymbol').textContent = quoteTokenInfo.symbol;
+            document.getElementById('approvalTokenName').textContent = tokenInfo.symbol;
+            document.getElementById('approvalTokenSymbol').textContent = tokenInfo.symbol;
             document.getElementById('approvalSection').classList.remove('hidden');
+            document.getElementById('approvalSection').dataset.tokenAddress = tokenAddress;
+            document.getElementById('approvalSection').dataset.tokenDecimals = tokenInfo.decimals;
+            document.getElementById('approvalSection').dataset.tokenSymbol = tokenInfo.symbol;
           } else {
             document.getElementById('approvalSection').classList.add('hidden');
           }
@@ -1111,8 +1127,12 @@
 
     // Approve token
     async function approveToken() {
-      if (!signer || !quoteTokenInfo.address) {
-        showError('Please connect wallet and select quote token');
+      const approvalSection = document.getElementById('approvalSection');
+      const tokenAddress = approvalSection.dataset.tokenAddress;
+      const tokenSymbol = approvalSection.dataset.tokenSymbol;
+
+      if (!signer || !tokenAddress) {
+        showError('Please connect wallet and select token');
         return;
       }
 
@@ -1121,7 +1141,7 @@
         approvalBtn.disabled = true;
         approvalBtn.textContent = 'Approving...';
 
-        const tokenContract = new ethers.Contract(quoteTokenInfo.address, ERC20_ABI, signer);
+        const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
 
         // Approve max uint256 for convenience
         const maxApproval = ethers.constants.MaxUint256;
@@ -1138,8 +1158,9 @@
 
         await tx.wait();
 
-        document.getElementById('approvalSection').classList.add('hidden');
-        showSuccess(`${quoteTokenInfo.symbol} approved! You can now execute your trade.`);
+        approvalSection.classList.add('hidden');
+        showSuccess(`${tokenSymbol} approved! You can now execute your trade.`);
+        return true;
 
       } catch (err) {
         console.error('Approval error:', err);
@@ -1150,10 +1171,11 @@
           errorMsg += err.message || err.toString();
         }
         showError(errorMsg);
+        return false;
       } finally {
         const approvalBtn = document.getElementById('approvalBtn');
         approvalBtn.disabled = false;
-        approvalBtn.textContent = `Approve ${quoteTokenInfo.symbol}`;
+        approvalBtn.textContent = `Approve ${tokenSymbol}`;
       }
     }
 
@@ -1273,6 +1295,7 @@
     async function detectWalletType() {
       if (window.ethereum) {
         if (window.ethereum.isRabby) return 'Rabby Wallet';
+        if (window.ethereum.isDefi || window.ethereum.isDefiwallet) return 'Crypto.com DeFi Wallet';
         if (window.ethereum.isMetaMask) return 'MetaMask';
         if (window.ethereum.isCoinbaseWallet) return 'Coinbase Wallet';
         if (window.ethereum.isBraveWallet) return 'Brave Wallet';
@@ -1284,27 +1307,38 @@
 
     async function connectWallet() {
       try {
+        console.log('connectWallet called');
         hideError();
         hideSuccess();
 
         if (typeof window.ethereum === 'undefined') {
-          showError('Please install a Web3 wallet (MetaMask, Rabby, etc.)');
+          console.error('window.ethereum is undefined');
+          showError('Please install a Web3 wallet (MetaMask, Rabby, Crypto.com DeFi Wallet, etc.)');
           return;
         }
 
+        console.log('window.ethereum detected:', window.ethereum);
+
         if (!currentNetwork) {
+          console.error('No network selected');
           showError('Please select a network first');
           return;
         }
 
+        console.log('Current network:', currentNetwork);
+
         // Detect wallet type
         walletName = await detectWalletType();
+        console.log('Wallet type:', walletName);
 
         provider = new ethers.providers.Web3Provider(window.ethereum, "any");
 
         // Request accounts
+        console.log('Requesting accounts...');
         const accounts = await provider.send('eth_requestAccounts', []);
+        console.log('Accounts received:', accounts);
         const network = await provider.getNetwork();
+        console.log('Network:', network);
 
         // Check if wallet is on the correct network
         if (network.chainId !== currentNetwork.chainId) {
@@ -1336,7 +1370,8 @@
           loadTokenInfo('quote');
         }
       } catch (err) {
-        showError('Failed to connect wallet: ' + err.message);
+        console.error('Error in connectWallet:', err);
+        showError('Failed to connect wallet: ' + (err.message || err.toString()));
       }
     }
 
@@ -1367,6 +1402,40 @@
           throw new Error('Please connect your wallet');
         }
 
+        // Check if approval is needed first
+        const cashflow = document.getElementById('cashflow').value;
+        const cashflowCcy = document.getElementById('cashflowCcy').value;
+
+        if (parseFloat(cashflow) > 0) {
+          // Determine which token we're using for collateral
+          const tokenInfo = cashflowCcy === '0' ? baseTokenInfo : quoteTokenInfo;
+          const tokenAddress = tokenInfo.address;
+
+          if (!tokenAddress) {
+            throw new Error('Please select valid token addresses');
+          }
+
+          // Check current allowance
+          const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+          const allowance = await tokenContract.allowance(account, CONTANGO_PROXY);
+          const cashflowWei = ethers.utils.parseUnits(cashflow, tokenInfo.decimals);
+
+          // If insufficient allowance, request approval first
+          if (allowance.lt(cashflowWei)) {
+            submitBtn.textContent = 'Approving token...';
+            showSuccess(`Approval needed for ${tokenInfo.symbol}. Please approve in your wallet.`);
+
+            const approvalResult = await approveToken();
+            if (!approvalResult) {
+              throw new Error('Approval required to proceed with trade');
+            }
+
+            // Wait a moment for the approval to be indexed
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            submitBtn.textContent = 'Executing trade...';
+          }
+        }
+
         // Get form values
         const baseToken = document.getElementById('baseToken').value.trim();
         const quoteToken = document.getElementById('quoteToken').value.trim();
@@ -1374,8 +1443,6 @@
         const quantity = document.getElementById('quantity').value;
         const side = document.getElementById('side').value;
         const limitPrice = document.getElementById('limitPrice').value;
-        const cashflow = document.getElementById('cashflow').value;
-        const cashflowCcy = document.getElementById('cashflowCcy').value;
 
         // Validate inputs
         if (!baseToken || !quoteToken || !moneyMarket || !quantity) {
