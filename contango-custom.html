@@ -568,6 +568,49 @@
     .hidden {
       display: none;
     }
+
+    /* Range slider styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      background: rgba(0, 255, 170, 0.2);
+      border-radius: 5px;
+      outline: none;
+      padding: 0;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, #00ffaa, #00d4ff);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, #00ffaa, #00d4ff);
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s ease;
+    }
+
+    input[type="range"]::-moz-range-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+    }
   </style>
 </head>
 <body>
@@ -599,7 +642,7 @@
       </div>
 
       <div id="connectSection">
-        <button class="connect-btn" onclick="connectWallet()">Connect Wallet (MetaMask, Rabby, etc.)</button>
+        <button class="connect-btn" onclick="connectWallet()">Connect Wallet</button>
       </div>
       <div id="walletSection" class="hidden">
         <div class="wallet-info">
@@ -687,10 +730,23 @@
         </select>
       </div>
 
+      <!-- Leverage Control -->
+      <div class="form-group">
+        <label class="form-label">Target Leverage <span id="leverageValue" class="leverage-badge" style="margin-left: 10px;">1.0x</span></label>
+        <input type="range" id="leverageSlider" min="1" max="10" step="0.1" value="1" class="form-input" style="cursor: pointer;" oninput="updateLeverageFromSlider()" />
+        <div style="display: flex; gap: 10px; margin-top: 8px;">
+          <input type="number" id="leverageInput" min="1" max="10" step="0.1" value="1" class="form-input" placeholder="1.0" style="flex: 1;" oninput="updateLeverageFromInput()" />
+          <button class="preset-btn" onclick="setLeverage(2)" style="flex: 0 0 60px;">2x</button>
+          <button class="preset-btn" onclick="setLeverage(5)" style="flex: 0 0 60px;">5x</button>
+          <button class="preset-btn" onclick="setLeverage(10)" style="flex: 0 0 60px;">10x</button>
+        </div>
+        <span class="form-help">Desired leverage for your position</span>
+      </div>
+
       <!-- Quantity -->
       <div class="form-group">
         <label class="form-label">Quantity *</label>
-        <input type="text" id="quantity" class="form-input" placeholder="0.0" oninput="calculateMetrics()" />
+        <input type="text" id="quantity" class="form-input" placeholder="0.0" oninput="calculateFromQuantity()" />
         <span class="form-help">Amount of base token for the position</span>
       </div>
 
@@ -705,7 +761,7 @@
       <div class="form-group">
         <label class="form-label">Collateral / Cashflow *</label>
         <div class="input-with-max">
-          <input type="text" id="cashflow" class="form-input" placeholder="0.0" oninput="calculateMetrics()" />
+          <input type="text" id="cashflow" class="form-input" placeholder="0.0" oninput="calculateFromCollateral()" />
           <button class="max-btn" onclick="setMaxCollateral()">MAX</button>
         </div>
         <span class="form-help">Amount of collateral to deposit for leverage</span>
@@ -714,7 +770,7 @@
       <!-- Collateral Currency -->
       <div class="form-group">
         <label class="form-label">Collateral Currency</label>
-        <select id="cashflowCcy" class="form-select" onchange="calculateMetrics()">
+        <select id="cashflowCcy" class="form-select" onchange="calculateFromQuantity(); checkAllowance();">
           <option value="0">Base Token</option>
           <option value="1">Quote Token</option>
         </select>
@@ -808,6 +864,13 @@
   </div>
 
   <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+  <script type="module">
+    import { createWeb3Modal, defaultConfig } from 'https://esm.sh/@web3modal/ethers5@3.5.0'
+
+    // Make createWeb3Modal and defaultConfig globally available
+    window.createWeb3Modal = createWeb3Modal;
+    window.defaultConfig = defaultConfig;
+  </script>
   <script>
     const CONTANGO_ABI = [
       "function trade(tuple(bytes32 symbol, address trader, uint256 quantity, int256 limitPrice, int256 cashflow, uint8 cashflowCcy) tradeParams) external payable returns (tuple(bytes32 positionId, address trader, uint256 openQuantity, uint256 openCost, int256 collateral, uint256 totalFees, int256 liquidationPrice))",
@@ -832,6 +895,7 @@
     let signer = null;
     let account = '';
     let walletName = '';
+    let web3Modal = null;
 
     // Token info cache
     let baseTokenInfo = { balance: '0', decimals: 18, symbol: '', address: '' };
@@ -1179,6 +1243,98 @@
       }
     }
 
+    // Leverage calculation functions
+    function updateLeverageFromSlider() {
+      const leverage = parseFloat(document.getElementById('leverageSlider').value);
+      document.getElementById('leverageInput').value = leverage.toFixed(1);
+      document.getElementById('leverageValue').textContent = `${leverage.toFixed(1)}x`;
+
+      // Recalculate collateral based on leverage
+      const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+      if (quantity > 0) {
+        const positionValue = quantity * currentPrice;
+        const requiredCollateral = positionValue / leverage;
+        const cashflowCcy = document.getElementById('cashflowCcy').value;
+        const collateralValue = cashflowCcy === '0' ? requiredCollateral / currentPrice : requiredCollateral;
+        document.getElementById('cashflow').value = collateralValue.toFixed(6);
+      }
+
+      calculateMetrics();
+    }
+
+    function updateLeverageFromInput() {
+      const leverage = parseFloat(document.getElementById('leverageInput').value);
+      if (leverage >= 1 && leverage <= 10) {
+        document.getElementById('leverageSlider').value = leverage;
+        document.getElementById('leverageValue').textContent = `${leverage.toFixed(1)}x`;
+
+        // Recalculate collateral based on leverage
+        const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+        if (quantity > 0) {
+          const positionValue = quantity * currentPrice;
+          const requiredCollateral = positionValue / leverage;
+          const cashflowCcy = document.getElementById('cashflowCcy').value;
+          const collateralValue = cashflowCcy === '0' ? requiredCollateral / currentPrice : requiredCollateral;
+          document.getElementById('cashflow').value = collateralValue.toFixed(6);
+        }
+
+        calculateMetrics();
+      }
+    }
+
+    function setLeverage(value) {
+      document.getElementById('leverageSlider').value = value;
+      document.getElementById('leverageInput').value = value;
+      document.getElementById('leverageValue').textContent = `${value}.0x`;
+
+      // Recalculate collateral based on leverage
+      const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+      if (quantity > 0) {
+        const positionValue = quantity * currentPrice;
+        const requiredCollateral = positionValue / value;
+        const cashflowCcy = document.getElementById('cashflowCcy').value;
+        const collateralValue = cashflowCcy === '0' ? requiredCollateral / currentPrice : requiredCollateral;
+        document.getElementById('cashflow').value = collateralValue.toFixed(6);
+      }
+
+      calculateMetrics();
+    }
+
+    function calculateFromQuantity() {
+      const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+      const leverage = parseFloat(document.getElementById('leverageSlider').value) || 1;
+
+      if (quantity > 0) {
+        const positionValue = quantity * currentPrice;
+        const requiredCollateral = positionValue / leverage;
+        const cashflowCcy = document.getElementById('cashflowCcy').value;
+        const collateralValue = cashflowCcy === '0' ? requiredCollateral / currentPrice : requiredCollateral;
+        document.getElementById('cashflow').value = collateralValue.toFixed(6);
+      }
+
+      calculateMetrics();
+    }
+
+    function calculateFromCollateral() {
+      const cashflow = parseFloat(document.getElementById('cashflow').value) || 0;
+      const cashflowCcy = document.getElementById('cashflowCcy').value;
+      const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+
+      if (quantity > 0 && cashflow > 0) {
+        const positionValue = quantity * currentPrice;
+        const collateralValue = cashflowCcy === '0' ? cashflow * currentPrice : cashflow;
+        const calculatedLeverage = positionValue / collateralValue;
+
+        if (calculatedLeverage >= 1 && calculatedLeverage <= 10) {
+          document.getElementById('leverageSlider').value = calculatedLeverage;
+          document.getElementById('leverageInput').value = calculatedLeverage.toFixed(1);
+          document.getElementById('leverageValue').textContent = `${calculatedLeverage.toFixed(1)}x`;
+        }
+      }
+
+      calculateMetrics();
+    }
+
     // Set max collateral
     function setMaxCollateral() {
       const cashflowCcy = document.getElementById('cashflowCcy').value;
@@ -1186,7 +1342,7 @@
 
       if (parseFloat(maxBalance) > 0) {
         document.getElementById('cashflow').value = maxBalance;
-        calculateMetrics();
+        calculateFromCollateral();
         checkAllowance();
       }
     }
@@ -1220,7 +1376,12 @@
       // Update UI
       document.getElementById('metricsSection').classList.remove('hidden');
       document.getElementById('leverageMetric').textContent = `${leverage.toFixed(2)}x`;
-      document.getElementById('leverageBadge').textContent = `${leverage.toFixed(1)}x`;
+
+      // Update leverage badge in metrics section
+      const metricBadge = document.getElementById('leverageBadge');
+      if (metricBadge) {
+        metricBadge.textContent = `${leverage.toFixed(1)}x`;
+      }
 
       document.getElementById('positionValueMetric').textContent = `$${positionValue.toFixed(2)}`;
 
@@ -1279,86 +1440,97 @@
       }
     }
 
-    window.addEventListener('load', async () => {
-      // Load networks first
-      await loadNetworks();
+    // Initialize Web3Modal
+    async function initWeb3Modal() {
+      // Wait for Web3Modal to be available
+      while (!window.createWeb3Modal || !window.defaultConfig) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
 
-      // Then check if wallet is already connected
-      if (typeof window.ethereum !== 'undefined') {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        if (accounts.length > 0) {
-          await connectWallet();
+      const projectId = '3fbb6bba6f1de962d911bb5b5c9ddd26'; // WalletConnect project ID
+
+      // Configure metadata
+      const metadata = {
+        name: 'Contango Direct Interface',
+        description: 'Custom Position Builder for Contango',
+        url: window.location.origin,
+        icons: ['https://avatars.githubusercontent.com/u/37784886']
+      };
+
+      // Get all available chains from NETWORKS
+      const chains = Object.values(NETWORKS).map(network => ({
+        chainId: network.chainId,
+        name: network.name,
+        currency: network.nativeCurrency.symbol,
+        explorerUrl: network.explorerUrl,
+        rpcUrl: network.rpcUrl
+      }));
+
+      const ethersConfig = window.defaultConfig({
+        metadata,
+        enableEIP6963: true,
+        enableInjected: true,
+        enableCoinbase: true,
+        rpcUrl: 'https://mainnet.base.org',
+        defaultChainId: 8453
+      });
+
+      web3Modal = window.createWeb3Modal({
+        ethersConfig,
+        chains,
+        projectId,
+        enableAnalytics: false,
+        themeMode: 'dark',
+        themeVariables: {
+          '--w3m-accent': '#00ffaa',
+          '--w3m-border-radius-master': '10px'
         }
-      }
-    });
+      });
 
-    async function detectWalletType() {
-      if (window.ethereum) {
-        if (window.ethereum.isRabby) return 'Rabby Wallet';
-        if (window.ethereum.isDefi || window.ethereum.isDefiwallet) return 'Crypto.com DeFi Wallet';
-        if (window.ethereum.isMetaMask) return 'MetaMask';
-        if (window.ethereum.isCoinbaseWallet) return 'Coinbase Wallet';
-        if (window.ethereum.isBraveWallet) return 'Brave Wallet';
-        if (window.ethereum.isFrame) return 'Frame';
-        return 'Web3 Wallet';
+      // Subscribe to connection events
+      web3Modal.subscribeProvider(async (newState) => {
+        if (newState.isConnected && newState.address) {
+          await handleWalletConnected(newState);
+        } else if (!newState.isConnected) {
+          handleWalletDisconnected();
+        }
+      });
+
+      // Check if already connected
+      const state = web3Modal.getState();
+      if (state.isConnected && state.address) {
+        await handleWalletConnected(state);
       }
-      return 'Unknown';
     }
 
-    async function connectWallet() {
+    async function handleWalletConnected(state) {
       try {
-        console.log('connectWallet called');
-        hideError();
-        hideSuccess();
-
-        if (typeof window.ethereum === 'undefined') {
-          console.error('window.ethereum is undefined');
-          showError('Please install a Web3 wallet (MetaMask, Rabby, Crypto.com DeFi Wallet, etc.)');
-          return;
-        }
-
-        console.log('window.ethereum detected:', window.ethereum);
-
-        if (!currentNetwork) {
-          console.error('No network selected');
-          showError('Please select a network first');
-          return;
-        }
-
-        console.log('Current network:', currentNetwork);
+        const walletProvider = web3Modal.getWalletProvider();
+        provider = new ethers.providers.Web3Provider(walletProvider, "any");
+        signer = provider.getSigner();
+        account = state.address;
 
         // Detect wallet type
-        walletName = await detectWalletType();
-        console.log('Wallet type:', walletName);
+        walletName = 'Web3 Wallet';
+        if (walletProvider.isMetaMask) walletName = 'MetaMask';
+        if (walletProvider.isRabby) walletName = 'Rabby';
+        if (walletProvider.isCoinbaseWallet) walletName = 'Coinbase Wallet';
+        if (walletProvider.isWalletConnect) walletName = 'WalletConnect';
 
-        provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-
-        // Request accounts
-        console.log('Requesting accounts...');
-        const accounts = await provider.send('eth_requestAccounts', []);
-        console.log('Accounts received:', accounts);
         const network = await provider.getNetwork();
-        console.log('Network:', network);
 
-        // Check if wallet is on the correct network
-        if (network.chainId !== currentNetwork.chainId) {
-          await promptNetworkSwitch();
-          // Re-check after switch attempt
-          const newNetwork = await provider.getNetwork();
-          if (newNetwork.chainId !== currentNetwork.chainId) {
-            showError(`Please switch to ${currentNetwork.name} in your wallet`);
-            return;
-          }
+        // Check if on correct network
+        if (currentNetwork && network.chainId !== currentNetwork.chainId) {
+          showError(`Please switch to ${currentNetwork.name} in your wallet`);
+          document.getElementById('submitBtn').disabled = true;
+        } else {
+          document.getElementById('submitBtn').disabled = false;
         }
-
-        signer = provider.getSigner();
-        account = accounts[0];
 
         document.getElementById('walletAddress').textContent = formatAddress(account);
         document.getElementById('walletType').textContent = walletName;
         document.getElementById('connectSection').classList.add('hidden');
         document.getElementById('walletSection').classList.remove('hidden');
-        document.getElementById('submitBtn').disabled = false;
 
         // Load token info if addresses are already filled
         const baseToken = document.getElementById('baseToken').value;
@@ -1370,12 +1542,12 @@
           loadTokenInfo('quote');
         }
       } catch (err) {
-        console.error('Error in connectWallet:', err);
+        console.error('Error handling wallet connection:', err);
         showError('Failed to connect wallet: ' + (err.message || err.toString()));
       }
     }
 
-    function disconnectWallet() {
+    function handleWalletDisconnected() {
       provider = null;
       signer = null;
       account = '';
@@ -1387,6 +1559,48 @@
       hideError();
       hideSuccess();
     }
+
+    async function connectWallet() {
+      try {
+        hideError();
+        hideSuccess();
+
+        if (!currentNetwork) {
+          showError('Please select a network first');
+          return;
+        }
+
+        if (!web3Modal) {
+          showError('Wallet connection is initializing, please try again in a moment');
+          return;
+        }
+
+        await web3Modal.open();
+      } catch (err) {
+        console.error('Error opening wallet modal:', err);
+        showError('Failed to open wallet selector: ' + (err.message || err.toString()));
+      }
+    }
+
+    async function disconnectWallet() {
+      try {
+        if (web3Modal) {
+          await web3Modal.disconnect();
+        }
+        handleWalletDisconnected();
+      } catch (err) {
+        console.error('Error disconnecting wallet:', err);
+        handleWalletDisconnected(); // Force disconnect UI even on error
+      }
+    }
+
+    window.addEventListener('load', async () => {
+      // Load networks first
+      await loadNetworks();
+
+      // Initialize Web3Modal
+      await initWeb3Modal();
+    });
 
     async function openPosition() {
       try {
