@@ -362,6 +362,209 @@
       font-size: 0.8rem;
     }
 
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 25px 0;
+    }
+
+    .metric-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      color: #8b93b5;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #00ffaa;
+    }
+
+    .metric-value.warning {
+      color: #ffc857;
+    }
+
+    .metric-value.danger {
+      color: #ff6b6b;
+    }
+
+    .metric-subtext {
+      font-size: 0.7rem;
+      color: #5a5f7d;
+      margin-top: 4px;
+    }
+
+    .balance-display {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: rgba(0, 255, 170, 0.05);
+      border: 1px solid rgba(0, 255, 170, 0.2);
+      border-radius: 8px;
+      margin-top: 8px;
+      font-size: 0.85rem;
+    }
+
+    .balance-label {
+      color: #8b93b5;
+    }
+
+    .balance-value {
+      color: #00ffaa;
+      font-weight: 600;
+    }
+
+    .preset-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .preset-btn {
+      padding: 12px 16px;
+      background: rgba(0, 212, 255, 0.1);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      border-radius: 8px;
+      color: #00d4ff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .preset-btn:hover:not(:disabled) {
+      background: rgba(0, 212, 255, 0.2);
+      border-color: rgba(0, 212, 255, 0.5);
+    }
+
+    .approval-section {
+      margin: 20px 0;
+      padding: 16px;
+      background: rgba(255, 200, 0, 0.05);
+      border: 1px solid rgba(255, 200, 0, 0.2);
+      border-radius: 10px;
+    }
+
+    .approval-btn {
+      width: 100%;
+      padding: 14px;
+      background: rgba(255, 200, 0, 0.2);
+      border: 1px solid rgba(255, 200, 0, 0.4);
+      border-radius: 8px;
+      color: #ffc857;
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .input-with-max {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-with-max input {
+      flex: 1;
+    }
+
+    .max-btn {
+      padding: 0 20px;
+      background: rgba(0, 255, 170, 0.1);
+      border: 1px solid rgba(0, 255, 170, 0.3);
+      border-radius: 8px;
+      color: #00ffaa;
+      font-size: 0.85rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .max-btn:hover:not(:disabled) {
+      background: rgba(0, 255, 170, 0.2);
+    }
+
+    .leverage-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      background: linear-gradient(135deg, #00ffaa, #00d4ff);
+      color: #0a0e27;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-left: 10px;
+    }
+
+    .network-selector {
+      margin-bottom: 20px;
+    }
+
+    .network-select {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(0, 255, 170, 0.3);
+      border-radius: 10px;
+      color: #e0e6ff;
+      font-size: 0.95rem;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .network-select:hover {
+      border-color: rgba(0, 255, 170, 0.5);
+    }
+
+    .network-select:focus {
+      outline: none;
+      border-color: #00ffaa;
+      box-shadow: 0 0 10px rgba(0, 255, 170, 0.3);
+    }
+
+    .network-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: #8b93b5;
+    }
+
+    .network-status {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #00ffaa;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .network-status.disconnected {
+      background: #5a5f7d;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.6;
+        transform: scale(1.1);
+      }
+    }
+
     .hidden {
       display: none;
     }
@@ -378,11 +581,23 @@
 
     <!-- Info Alert -->
     <div class="alert alert-info" style="animation: slideIn 0.6s ease-out;">
-      <strong>🎯 Create Custom Positions:</strong> This interface lets you open positions with any token pair and money market combination on Base. Specify your base token, quote token, and money market to create positions not available in the standard UI.
+      <strong>🎯 Create Custom Positions:</strong> This interface lets you open positions with any token pair and money market combination across multiple chains. Specify your base token, quote token, and money market to create positions not available in the standard UI.
     </div>
 
-    <!-- Wallet Connection -->
+    <!-- Network & Wallet Connection -->
     <div class="card wallet-card">
+      <!-- Network Selector -->
+      <div class="network-selector">
+        <label class="wallet-label" style="margin-bottom: 8px; display: block;">SELECT NETWORK</label>
+        <select id="networkSelect" class="network-select" onchange="switchNetwork()">
+          <option value="">Loading networks...</option>
+        </select>
+        <div class="network-info">
+          <span class="network-status disconnected" id="networkStatus"></span>
+          <span id="networkInfo">Select a network to begin</span>
+        </div>
+      </div>
+
       <div id="connectSection">
         <button class="connect-btn" onclick="connectWallet()">Connect Wallet (MetaMask, Rabby, etc.)</button>
       </div>
@@ -405,21 +620,38 @@
         Define your position by specifying the token addresses and money market. The instrument symbol will be automatically generated from your inputs.
       </p>
 
+      <!-- Preset Configurations -->
+      <div class="section-title">Quick Presets</div>
+      <div class="preset-buttons">
+        <button class="preset-btn" onclick="loadPreset('dai-usds')">DAI/USDS Loop</button>
+        <button class="preset-btn" onclick="loadPreset('weth-usdc')">WETH/USDC</button>
+        <button class="preset-btn" onclick="loadPreset('cbeth-usdc')">cbETH/USDC</button>
+        <button class="preset-btn" onclick="clearForm()">Clear All</button>
+      </div>
+
       <div class="section-title">Token Pair Configuration</div>
       
       <div class="token-grid">
         <!-- Base Token -->
         <div class="form-group">
           <label class="form-label">Base Token Address *</label>
-          <input type="text" id="baseToken" class="form-input address-input" placeholder="0x..." />
+          <input type="text" id="baseToken" class="form-input address-input" placeholder="0x..." onchange="loadTokenInfo('base')" />
           <span class="form-help">The token you want to long/short (e.g., WETH)</span>
+          <div id="baseBalance" class="balance-display hidden">
+            <span class="balance-label">Your Balance:</span>
+            <span class="balance-value">--</span>
+          </div>
         </div>
 
         <!-- Quote Token -->
         <div class="form-group">
           <label class="form-label">Quote Token Address *</label>
-          <input type="text" id="quoteToken" class="form-input address-input" placeholder="0x..." />
+          <input type="text" id="quoteToken" class="form-input address-input" placeholder="0x..." onchange="loadTokenInfo('quote')" />
           <span class="form-help">The collateral/pricing token (e.g., USDC)</span>
+          <div id="quoteBalance" class="balance-display hidden">
+            <span class="balance-label">Your Balance:</span>
+            <span class="balance-value">--</span>
+          </div>
         </div>
       </div>
 
@@ -458,7 +690,7 @@
       <!-- Quantity -->
       <div class="form-group">
         <label class="form-label">Quantity *</label>
-        <input type="text" id="quantity" class="form-input" placeholder="0.0" />
+        <input type="text" id="quantity" class="form-input" placeholder="0.0" oninput="calculateMetrics()" />
         <span class="form-help">Amount of base token for the position</span>
       </div>
 
@@ -471,18 +703,61 @@
 
       <!-- Collateral Amount -->
       <div class="form-group">
-        <label class="form-label">Collateral / Cashflow (optional)</label>
-        <input type="text" id="cashflow" class="form-input" placeholder="0.0" />
-        <span class="form-help">Additional collateral to deposit</span>
+        <label class="form-label">Collateral / Cashflow *</label>
+        <div class="input-with-max">
+          <input type="text" id="cashflow" class="form-input" placeholder="0.0" oninput="calculateMetrics()" />
+          <button class="max-btn" onclick="setMaxCollateral()">MAX</button>
+        </div>
+        <span class="form-help">Amount of collateral to deposit for leverage</span>
       </div>
 
       <!-- Collateral Currency -->
       <div class="form-group">
         <label class="form-label">Collateral Currency</label>
-        <select id="cashflowCcy" class="form-select">
+        <select id="cashflowCcy" class="form-select" onchange="calculateMetrics()">
           <option value="0">Base Token</option>
           <option value="1">Quote Token</option>
         </select>
+      </div>
+
+      <!-- Position Metrics Dashboard -->
+      <div id="metricsSection" class="hidden">
+        <div class="section-title">Position Metrics <span id="leverageBadge" class="leverage-badge">--x</span></div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Leverage</div>
+            <div id="leverageMetric" class="metric-value">--</div>
+            <div class="metric-subtext">Position Size / Collateral</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Position Value</div>
+            <div id="positionValueMetric" class="metric-value">--</div>
+            <div class="metric-subtext">Total exposure</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">LTV Ratio</div>
+            <div id="ltvMetric" class="metric-value">--</div>
+            <div class="metric-subtext">Loan-to-Value</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Est. Liq. Price</div>
+            <div id="liqPriceMetric" class="metric-value">--</div>
+            <div class="metric-subtext">Approximate liquidation</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Token Approval Section -->
+      <div id="approvalSection" class="approval-section hidden">
+        <div style="font-size: 0.9rem; color: #ffc857; margin-bottom: 8px;">
+          ⚠️ Token approval required before trading
+        </div>
+        <div style="font-size: 0.8rem; color: #8b93b5; margin-bottom: 10px;">
+          You need to approve the Contango contract to spend your <span id="approvalTokenName">tokens</span>
+        </div>
+        <button id="approvalBtn" class="approval-btn" onclick="approveToken()">
+          Approve <span id="approvalTokenSymbol">Token</span>
+        </button>
       </div>
 
       <!-- Generated Symbol Preview -->
@@ -504,46 +779,444 @@
 
     <!-- Example Section -->
     <div class="card" style="animation: slideIn 0.85s ease-out;">
-      <h3 style="color: #00aaff; margin-bottom: 15px; font-size: 1.1rem;">📝 Example: WETH/USDC Long on Aave</h3>
+      <h3 style="color: #00aaff; margin-bottom: 15px; font-size: 1.1rem;">📝 Multi-Chain Support</h3>
+
       <div class="example-box">
-        <div style="margin-bottom: 10px;"><strong>Base Token (WETH):</strong> <code>0x4200000000000000000000000000000000000006</code></div>
-        <div style="margin-bottom: 10px;"><strong>Quote Token (USDC):</strong> <code>0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913</code></div>
-        <div style="margin-bottom: 10px;"><strong>Money Market:</strong> Aave</div>
-        <div style="margin-bottom: 10px;"><strong>Side:</strong> Long</div>
-        <div><strong>Quantity:</strong> 1.0 (1 WETH)</div>
+        <div style="margin-bottom: 12px; color: #00ffaa; font-weight: 600;">Supported Networks</div>
+        <div style="margin-bottom: 8px;"><strong>• Base:</strong> DAI/USDS loops, WETH/USDC, cbETH/USDC</div>
+        <div style="margin-bottom: 8px;"><strong>• Arbitrum One:</strong> WETH/USDC, WBTC/USDC, ARB/USDC</div>
+        <div style="margin-bottom: 8px;"><strong>• Optimism:</strong> WETH/USDC, OP/USDC</div>
+        <div style="margin-bottom: 8px;"><strong>• Polygon:</strong> WETH/USDC, WMATIC/USDC</div>
+        <div style="margin-bottom: 8px;"><strong>• Ethereum:</strong> WETH/USDC, WBTC/USDC</div>
+        <div><strong>• Avalanche:</strong> WAVAX/USDC, WETH/USDC</div>
       </div>
+
       <p style="margin-top: 15px; font-size: 0.85rem; color: #8b93b5;">
-        This creates a leveraged long position on WETH using USDC as collateral through Aave on Base.
+        💡 Tip: Select your network above, then use preset buttons to auto-fill popular token pairs!
       </p>
     </div>
 
     <!-- Contract Info -->
-    <div class="info-card">
-      <div><strong>Contract:</strong> 0xa6a147946FACAc9E0B99824870B36088764f969F</div>
-      <div><strong>Network:</strong> Base Chain (Chain ID: 8453)</div>
-      <div><strong>Function:</strong> trade() via multicall</div>
+    <div class="info-card" id="contractInfo">
+      <div><strong>Select a network to view contract details</strong></div>
     </div>
 
     <!-- Disclaimer -->
     <div class="disclaimer">
-      ⚠️ Advanced users only. Verify all token addresses on BaseScan before trading. This UI charges no fees but understand the protocol mechanics before use.
+      ⚠️ Advanced users only. Verify all token addresses on the block explorer before trading. This UI charges no fees but understand the protocol mechanics before use.
     </div>
   </div>
 
   <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
   <script>
-    const CONTANGO_PROXY = '0xa6a147946FACAc9E0B99824870B36088764f969F';
-    const BASE_CHAIN_ID = 8453;
-
     const CONTANGO_ABI = [
       "function trade(tuple(bytes32 symbol, address trader, uint256 quantity, int256 limitPrice, int256 cashflow, uint8 cashflowCcy) tradeParams) external payable returns (tuple(bytes32 positionId, address trader, uint256 openQuantity, uint256 openCost, int256 collateral, uint256 totalFees, int256 liquidationPrice))",
       "function multicall(bytes[] calldata data) external payable returns (bytes[] memory results)"
     ];
 
+    const ERC20_ABI = [
+      "function balanceOf(address owner) view returns (uint256)",
+      "function decimals() view returns (uint8)",
+      "function symbol() view returns (string)",
+      "function approve(address spender, uint256 amount) returns (bool)",
+      "function allowance(address owner, address spender) view returns (uint256)"
+    ];
+
+    // Network configuration - loaded from JSON
+    let NETWORKS = {};
+    let currentNetwork = null;
+    let CONTANGO_PROXY = '';
+    let PRESETS = {};
+
     let provider = null;
     let signer = null;
     let account = '';
     let walletName = '';
+
+    // Token info cache
+    let baseTokenInfo = { balance: '0', decimals: 18, symbol: '', address: '' };
+    let quoteTokenInfo = { balance: '0', decimals: 18, symbol: '', address: '' };
+    let currentPrice = 1; // Approximate price (base/quote)
+
+    // Load network configuration from JSON
+    async function loadNetworks() {
+      try {
+        const response = await fetch('network-config.json');
+        NETWORKS = await response.json();
+
+        // Populate network selector
+        const networkSelect = document.getElementById('networkSelect');
+        networkSelect.innerHTML = '<option value="">Select Network...</option>';
+
+        Object.keys(NETWORKS).forEach(networkKey => {
+          const network = NETWORKS[networkKey];
+          const option = document.createElement('option');
+          option.value = networkKey;
+          option.textContent = `${network.name} (Chain ${network.chainId})`;
+          networkSelect.appendChild(option);
+        });
+
+        // Default to Base
+        networkSelect.value = 'base';
+        await switchNetwork();
+
+      } catch (err) {
+        console.error('Error loading networks:', err);
+        showError('Failed to load network configuration');
+      }
+    }
+
+    // Switch to selected network
+    async function switchNetwork() {
+      const networkKey = document.getElementById('networkSelect').value;
+
+      if (!networkKey || !NETWORKS[networkKey]) {
+        document.getElementById('networkInfo').textContent = 'Select a network to begin';
+        document.getElementById('networkStatus').className = 'network-status disconnected';
+        return;
+      }
+
+      currentNetwork = NETWORKS[networkKey];
+      CONTANGO_PROXY = currentNetwork.contracts.maestroProxy;
+      PRESETS = currentNetwork.presets || {};
+
+      // Update network info display
+      document.getElementById('networkInfo').textContent =
+        `${currentNetwork.name} - Chain ID: ${currentNetwork.chainId}`;
+      document.getElementById('networkStatus').className = 'network-status';
+
+      // Update presets UI
+      updatePresetsUI();
+
+      // Update contract info display
+      updateContractInfo();
+
+      // Clear form when switching networks
+      clearForm();
+
+      // If wallet is connected, check if we need to switch network
+      if (provider && account) {
+        const network = await provider.getNetwork();
+        if (network.chainId !== currentNetwork.chainId) {
+          await promptNetworkSwitch();
+        } else {
+          // Reload token info if addresses are set
+          const baseToken = document.getElementById('baseToken').value;
+          const quoteToken = document.getElementById('quoteToken').value;
+          if (baseToken && ethers.utils.isAddress(baseToken)) {
+            loadTokenInfo('base');
+          }
+          if (quoteToken && ethers.utils.isAddress(quoteToken)) {
+            loadTokenInfo('quote');
+          }
+        }
+      }
+    }
+
+    // Prompt user to switch network in wallet
+    async function promptNetworkSwitch() {
+      if (!currentNetwork) return;
+
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: `0x${currentNetwork.chainId.toString(16)}` }],
+        });
+
+        // Reinitialize provider after network switch
+        provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+        signer = provider.getSigner();
+
+        showSuccess(`Switched to ${currentNetwork.name}`);
+      } catch (switchError) {
+        // This error code indicates that the chain has not been added to MetaMask
+        if (switchError.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: `0x${currentNetwork.chainId.toString(16)}`,
+                chainName: currentNetwork.name,
+                nativeCurrency: currentNetwork.nativeCurrency,
+                rpcUrls: [currentNetwork.rpcUrl],
+                blockExplorerUrls: [currentNetwork.explorerUrl]
+              }]
+            });
+            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+            signer = provider.getSigner();
+          } catch (addError) {
+            showError('Failed to add network. Please add it manually.');
+            return;
+          }
+        } else {
+          showError('Failed to switch network: ' + switchError.message);
+          return;
+        }
+      }
+    }
+
+    // Update presets UI based on current network
+    function updatePresetsUI() {
+      const presetButtonsContainer = document.querySelector('.preset-buttons');
+      if (!presetButtonsContainer) return;
+
+      presetButtonsContainer.innerHTML = '';
+
+      // Add preset buttons for current network
+      Object.keys(PRESETS).forEach(presetKey => {
+        const button = document.createElement('button');
+        button.className = 'preset-btn';
+        button.textContent = PRESETS[presetKey].name;
+        button.onclick = () => loadPreset(presetKey);
+        presetButtonsContainer.appendChild(button);
+      });
+
+      // Add clear button
+      const clearButton = document.createElement('button');
+      clearButton.className = 'preset-btn';
+      clearButton.textContent = 'Clear All';
+      clearButton.onclick = clearForm;
+      presetButtonsContainer.appendChild(clearButton);
+    }
+
+    // Update contract info display
+    function updateContractInfo() {
+      const contractInfoDiv = document.getElementById('contractInfo');
+      if (!contractInfoDiv || !currentNetwork) return;
+
+      contractInfoDiv.innerHTML = `
+        <div><strong>Contract:</strong> ${currentNetwork.contracts.maestroProxy}</div>
+        <div><strong>Network:</strong> ${currentNetwork.name} (Chain ID: ${currentNetwork.chainId})</div>
+        <div><strong>Explorer:</strong> <a href="${currentNetwork.explorerUrl}" target="_blank" rel="noopener noreferrer" style="color: #00ffaa;">${currentNetwork.explorerUrl}</a></div>
+        <div><strong>Function:</strong> trade() via multicall</div>
+      `;
+    }
+
+    // Load preset configuration
+    function loadPreset(presetKey) {
+      const preset = PRESETS[presetKey];
+      if (!preset) return;
+
+      document.getElementById('baseToken').value = preset.baseToken;
+      document.getElementById('quoteToken').value = preset.quoteToken;
+      document.getElementById('moneyMarket').value = preset.moneyMarket;
+      document.getElementById('side').value = preset.side;
+
+      updateSymbolPreview();
+
+      if (account) {
+        loadTokenInfo('base');
+        loadTokenInfo('quote');
+      }
+
+      showSuccess(`Loaded preset: ${preset.name} - ${preset.description}`);
+      setTimeout(hideSuccess, 3000);
+    }
+
+    // Clear form
+    function clearForm() {
+      document.getElementById('baseToken').value = '';
+      document.getElementById('quoteToken').value = '';
+      document.getElementById('quantity').value = '';
+      document.getElementById('cashflow').value = '';
+      document.getElementById('limitPrice').value = '';
+      document.getElementById('moneyMarket').value = '';
+      document.getElementById('side').value = 'long';
+      document.getElementById('cashflowCcy').value = '1';
+
+      document.getElementById('baseBalance').classList.add('hidden');
+      document.getElementById('quoteBalance').classList.add('hidden');
+      document.getElementById('metricsSection').classList.add('hidden');
+      document.getElementById('approvalSection').classList.add('hidden');
+
+      baseTokenInfo = { balance: '0', decimals: 18, symbol: '', address: '' };
+      quoteTokenInfo = { balance: '0', decimals: 18, symbol: '', address: '' };
+
+      updateSymbolPreview();
+    }
+
+    // Load token information (balance, decimals, symbol)
+    async function loadTokenInfo(tokenType) {
+      if (!signer || !account) return;
+
+      try {
+        const inputId = tokenType === 'base' ? 'baseToken' : 'quoteToken';
+        const tokenAddress = document.getElementById(inputId).value.trim();
+
+        if (!ethers.utils.isAddress(tokenAddress)) {
+          return;
+        }
+
+        const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+
+        const [balance, decimals, symbol] = await Promise.all([
+          tokenContract.balanceOf(account),
+          tokenContract.decimals(),
+          tokenContract.symbol()
+        ]);
+
+        const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+
+        if (tokenType === 'base') {
+          baseTokenInfo = { balance: formattedBalance, decimals, symbol, address: tokenAddress };
+          const balanceDiv = document.getElementById('baseBalance');
+          balanceDiv.querySelector('.balance-value').textContent = `${parseFloat(formattedBalance).toFixed(4)} ${symbol}`;
+          balanceDiv.classList.remove('hidden');
+        } else {
+          quoteTokenInfo = { balance: formattedBalance, decimals, symbol, address: tokenAddress };
+          const balanceDiv = document.getElementById('quoteBalance');
+          balanceDiv.querySelector('.balance-value').textContent = `${parseFloat(formattedBalance).toFixed(4)} ${symbol}`;
+          balanceDiv.classList.remove('hidden');
+
+          // Check allowance for quote token
+          await checkAllowance();
+        }
+
+        calculateMetrics();
+
+      } catch (err) {
+        console.error('Error loading token info:', err);
+      }
+    }
+
+    // Check token allowance
+    async function checkAllowance() {
+      if (!signer || !account || !quoteTokenInfo.address) return;
+
+      try {
+        const tokenContract = new ethers.Contract(quoteTokenInfo.address, ERC20_ABI, provider);
+        const allowance = await tokenContract.allowance(account, CONTANGO_PROXY);
+        const cashflow = document.getElementById('cashflow').value || '0';
+        const cashflowCcy = document.getElementById('cashflowCcy').value;
+
+        // Only need approval if paying with quote token
+        if (cashflowCcy === '1' && parseFloat(cashflow) > 0) {
+          const cashflowWei = ethers.utils.parseUnits(cashflow, quoteTokenInfo.decimals);
+
+          if (allowance.lt(cashflowWei)) {
+            // Need approval
+            document.getElementById('approvalTokenName').textContent = quoteTokenInfo.symbol;
+            document.getElementById('approvalTokenSymbol').textContent = quoteTokenInfo.symbol;
+            document.getElementById('approvalSection').classList.remove('hidden');
+          } else {
+            document.getElementById('approvalSection').classList.add('hidden');
+          }
+        } else {
+          document.getElementById('approvalSection').classList.add('hidden');
+        }
+      } catch (err) {
+        console.error('Error checking allowance:', err);
+      }
+    }
+
+    // Approve token
+    async function approveToken() {
+      if (!signer || !quoteTokenInfo.address) {
+        showError('Please connect wallet and select quote token');
+        return;
+      }
+
+      try {
+        const approvalBtn = document.getElementById('approvalBtn');
+        approvalBtn.disabled = true;
+        approvalBtn.textContent = 'Approving...';
+
+        const tokenContract = new ethers.Contract(quoteTokenInfo.address, ERC20_ABI, signer);
+
+        // Approve max uint256 for convenience
+        const maxApproval = ethers.constants.MaxUint256;
+        const tx = await tokenContract.approve(CONTANGO_PROXY, maxApproval);
+
+        const explorerUrl = currentNetwork ? currentNetwork.explorerUrl : 'https://basescan.org';
+        showSuccess(`
+          <div class="tx-label">APPROVAL SUBMITTED</div>
+          <a href="${explorerUrl}/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
+            ${tx.hash}
+          </a>
+          <div style="margin-top: 10px; font-size: 0.85rem;">Waiting for confirmation...</div>
+        `);
+
+        await tx.wait();
+
+        document.getElementById('approvalSection').classList.add('hidden');
+        showSuccess(`${quoteTokenInfo.symbol} approved! You can now execute your trade.`);
+
+      } catch (err) {
+        console.error('Approval error:', err);
+        let errorMsg = 'Approval failed: ';
+        if (err.code === 4001) {
+          errorMsg += 'Transaction rejected by user';
+        } else {
+          errorMsg += err.message || err.toString();
+        }
+        showError(errorMsg);
+      } finally {
+        const approvalBtn = document.getElementById('approvalBtn');
+        approvalBtn.disabled = false;
+        approvalBtn.textContent = `Approve ${quoteTokenInfo.symbol}`;
+      }
+    }
+
+    // Set max collateral
+    function setMaxCollateral() {
+      const cashflowCcy = document.getElementById('cashflowCcy').value;
+      const maxBalance = cashflowCcy === '0' ? baseTokenInfo.balance : quoteTokenInfo.balance;
+
+      if (parseFloat(maxBalance) > 0) {
+        document.getElementById('cashflow').value = maxBalance;
+        calculateMetrics();
+        checkAllowance();
+      }
+    }
+
+    // Calculate position metrics (leverage, LTV, etc.)
+    function calculateMetrics() {
+      const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+      const cashflow = parseFloat(document.getElementById('cashflow').value) || 0;
+      const cashflowCcy = document.getElementById('cashflowCcy').value;
+
+      if (quantity === 0 || cashflow === 0) {
+        document.getElementById('metricsSection').classList.add('hidden');
+        return;
+      }
+
+      // Estimate position value and leverage
+      // For simplicity, assume base/quote price ratio
+      // In production, you'd fetch real prices from an oracle or DEX
+
+      const positionValue = quantity * currentPrice;
+      const collateralValue = cashflowCcy === '0' ? cashflow * currentPrice : cashflow;
+
+      const leverage = positionValue / collateralValue;
+      const ltv = ((positionValue - collateralValue) / positionValue) * 100;
+
+      // Estimate liquidation price (simplified)
+      // Assume 80% LTV threshold for liquidation
+      const liquidationLTV = 80;
+      const liqPrice = currentPrice * (1 - (liquidationLTV - ltv) / 100);
+
+      // Update UI
+      document.getElementById('metricsSection').classList.remove('hidden');
+      document.getElementById('leverageMetric').textContent = `${leverage.toFixed(2)}x`;
+      document.getElementById('leverageBadge').textContent = `${leverage.toFixed(1)}x`;
+
+      document.getElementById('positionValueMetric').textContent = `$${positionValue.toFixed(2)}`;
+
+      const ltvElement = document.getElementById('ltvMetric');
+      ltvElement.textContent = `${ltv.toFixed(1)}%`;
+      ltvElement.className = 'metric-value';
+      if (ltv > 70) ltvElement.classList.add('danger');
+      else if (ltv > 50) ltvElement.classList.add('warning');
+
+      const liqElement = document.getElementById('liqPriceMetric');
+      if (liqPrice > 0) {
+        liqElement.textContent = `$${liqPrice.toFixed(2)}`;
+      } else {
+        liqElement.textContent = 'N/A';
+      }
+
+      checkAllowance();
+    }
 
     // Update symbol preview when inputs change
     document.addEventListener('DOMContentLoaded', () => {
@@ -585,6 +1258,10 @@
     }
 
     window.addEventListener('load', async () => {
+      // Load networks first
+      await loadNetworks();
+
+      // Then check if wallet is already connected
       if (typeof window.ethereum !== 'undefined') {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         if (accounts.length > 0) {
@@ -615,50 +1292,28 @@
           return;
         }
 
+        if (!currentNetwork) {
+          showError('Please select a network first');
+          return;
+        }
+
         // Detect wallet type
         walletName = await detectWalletType();
 
         provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-        
+
         // Request accounts
         const accounts = await provider.send('eth_requestAccounts', []);
         const network = await provider.getNetwork();
 
-        if (network.chainId !== BASE_CHAIN_ID) {
-          try {
-            await window.ethereum.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: `0x${BASE_CHAIN_ID.toString(16)}` }],
-            });
-            // Reinitialize provider after network switch
-            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-          } catch (switchError) {
-            if (switchError.code === 4902) {
-              // Try to add the network
-              try {
-                await window.ethereum.request({
-                  method: 'wallet_addEthereumChain',
-                  params: [{
-                    chainId: `0x${BASE_CHAIN_ID.toString(16)}`,
-                    chainName: 'Base',
-                    nativeCurrency: {
-                      name: 'Ethereum',
-                      symbol: 'ETH',
-                      decimals: 18
-                    },
-                    rpcUrls: ['https://mainnet.base.org'],
-                    blockExplorerUrls: ['https://basescan.org']
-                  }]
-                });
-                provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-              } catch (addError) {
-                showError('Failed to add Base network. Please add it manually.');
-                return;
-              }
-            } else {
-              showError('Failed to switch to Base network: ' + switchError.message);
-              return;
-            }
+        // Check if wallet is on the correct network
+        if (network.chainId !== currentNetwork.chainId) {
+          await promptNetworkSwitch();
+          // Re-check after switch attempt
+          const newNetwork = await provider.getNetwork();
+          if (newNetwork.chainId !== currentNetwork.chainId) {
+            showError(`Please switch to ${currentNetwork.name} in your wallet`);
+            return;
           }
         }
 
@@ -670,6 +1325,16 @@
         document.getElementById('connectSection').classList.add('hidden');
         document.getElementById('walletSection').classList.remove('hidden');
         document.getElementById('submitBtn').disabled = false;
+
+        // Load token info if addresses are already filled
+        const baseToken = document.getElementById('baseToken').value;
+        const quoteToken = document.getElementById('quoteToken').value;
+        if (baseToken && ethers.utils.isAddress(baseToken)) {
+          loadTokenInfo('base');
+        }
+        if (quoteToken && ethers.utils.isAddress(quoteToken)) {
+          loadTokenInfo('quote');
+        }
       } catch (err) {
         showError('Failed to connect wallet: ' + err.message);
       }
@@ -736,12 +1401,17 @@
         const symbolString = `${baseToken.substring(2, 10)}-${quoteToken.substring(2, 10)}-${marketId}`.toUpperCase();
         const symbolBytes32 = ethers.utils.formatBytes32String(symbolString);
         
+        // Determine decimals for conversion
+        const baseDecimals = baseTokenInfo.decimals || 18;
+        const quoteDecimals = quoteTokenInfo.decimals || 18;
+        const cashflowDecimals = cashflowCcy === '0' ? baseDecimals : quoteDecimals;
+
         const contract = new ethers.Contract(CONTANGO_PROXY, CONTANGO_ABI, signer);
 
-        // Convert values
-        const quantityWei = ethers.utils.parseUnits(quantity, 18);
+        // Convert values with proper decimals
+        const quantityWei = ethers.utils.parseUnits(quantity, baseDecimals);
         const limitPriceWei = limitPrice ? ethers.utils.parseUnits(limitPrice, 18) : 0;
-        const cashflowWei = cashflow ? ethers.utils.parseUnits(cashflow, 18) : 0;
+        const cashflowWei = cashflow ? ethers.utils.parseUnits(cashflow, cashflowDecimals) : 0;
 
         const tradeParams = {
           symbol: symbolBytes32,
@@ -753,20 +1423,21 @@
         };
 
         const tx = await contract.trade(tradeParams);
-        
+
+        const explorerUrl = currentNetwork ? currentNetwork.explorerUrl : 'https://basescan.org';
         showSuccess(`
           <div class="tx-label">TRANSACTION SUBMITTED</div>
-          <a href="https://basescan.org/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
+          <a href="${explorerUrl}/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
             ${tx.hash}
           </a>
           <div style="margin-top: 10px; font-size: 0.85rem;">Waiting for confirmation...</div>
         `);
 
         await tx.wait();
-        
+
         showSuccess(`
           <div class="tx-label">POSITION OPENED!</div>
-          <a href="https://basescan.org/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
+          <a href="${explorerUrl}/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
             ${tx.hash}
           </a>
           <div style="margin-top: 10px; font-size: 0.85rem;">Your custom position is now active.</div>

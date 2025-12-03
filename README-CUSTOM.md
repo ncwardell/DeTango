@@ -2,46 +2,82 @@
 
 A powerful, fee-free interface for creating **custom positions** on Contango V2 with any token pair and money market combination.
 
+## 🌐 Live Demo
+
+**GitHub Pages**: [https://ncwardell.github.io/DeTango/](https://ncwardell.github.io/DeTango/)
+
+Access the interface directly from your browser - no installation required!
+
 ## 🎯 What Makes This Different?
 
 Unlike the standard Contango UI, this tool lets you:
 - ✅ **Create positions with ANY token pair** - not limited to pre-configured pairs
+- ✅ **Multi-chain support** - Trade on Base, Arbitrum, Optimism, Polygon, Ethereum, and Avalanche
 - ✅ **Choose ANY money market** - Aave, Moonwell, Sonne, Seamless, Compound, or custom
 - ✅ **Zero UI fees** - Direct smart contract interaction
 - ✅ **Multiple wallet support** - Works with Rabby, MetaMask, Coinbase Wallet, and more
 - ✅ **Full transparency** - See exactly what parameters are being sent to the contract
+- ✅ **Network auto-switching** - Automatically prompts wallet to switch networks
 
 ## 📁 Files
 
+- **index.html** - Landing page for GitHub Pages
 - **contango-custom.html** - Advanced custom position builder (recommended!)
-- **contango-direct.html** - Simple interface with pre-defined symbols
-- **contango-ui.jsx** - React component version
+- **network-config.json** - Multi-chain configuration with contract addresses and presets
 
 ## 🚀 Quick Start
 
-### Option 1: Custom Position Builder (RECOMMENDED)
+### Option 1: Use GitHub Pages (Easiest)
 
-1. Open `contango-custom.html` in your browser
-2. Connect your wallet (Rabby, MetaMask, etc.)
-3. Enter token addresses:
+Simply visit: **[https://ncwardell.github.io/DeTango/contango-custom.html](https://ncwardell.github.io/DeTango/contango-custom.html)**
+
+### Option 2: Run Locally
+
+1. Clone this repository
+2. Open `contango-custom.html` in your browser
+3. **Select your network** (Base, Arbitrum, Optimism, etc.)
+4. Connect your wallet (Rabby, MetaMask, etc.)
+5. Choose a preset or enter custom token addresses:
    - **Base Token**: The token you want to long/short
    - **Quote Token**: Your collateral/pricing token
-4. Select your money market (Aave, Moonwell, etc.)
-5. Configure position size and leverage
-6. Execute trade!
+6. Select your money market (Aave, Moonwell, etc.)
+7. Configure position size and leverage
+8. Execute trade!
 
 ### Option 2: Simple Interface
 
 Use `contango-direct.html` if you know the exact instrument symbol format used by Contango.
+
+## 🌐 Supported Networks
+
+The interface supports trading on 6 major chains:
+
+| Network | Chain ID | Presets Available |
+|---------|----------|-------------------|
+| **Base** | 8453 | DAI/USDS Loop, WETH/USDC, cbETH/USDC |
+| **Arbitrum One** | 42161 | WETH/USDC, WBTC/USDC, ARB/USDC |
+| **Optimism** | 10 | WETH/USDC, OP/USDC |
+| **Polygon** | 137 | WETH/USDC, WMATIC/USDC |
+| **Ethereum** | 1 | WETH/USDC, WBTC/USDC |
+| **Avalanche** | 43114 | WAVAX/USDC, WETH/USDC |
+
+### Network Auto-Switching
+
+When you select a network:
+- The UI automatically updates contract addresses
+- Preset buttons change to show network-specific token pairs
+- If your wallet is on a different network, you'll be prompted to switch
+- If the network isn't in your wallet, it will be added automatically
 
 ## 🔧 How to Build Custom Positions
 
 ### Understanding Token Pairs
 
 A Contango position consists of:
-1. **Base Token** - The asset you're trading (e.g., WETH)
-2. **Quote Token** - Your collateral (e.g., USDC)
-3. **Money Market** - Where the lending/borrowing happens
+1. **Network** - The blockchain you want to trade on
+2. **Base Token** - The asset you're trading (e.g., WETH)
+3. **Quote Token** - Your collateral (e.g., USDC)
+4. **Money Market** - Where the lending/borrowing happens
 
 ### Example: WETH/USDC Long on Base
 
@@ -261,3 +297,20 @@ New to Contango? Start here:
 **Built for the DeFi community** 🚀
 
 Direct access. No UI fees. Full control.
+
+## 🚀 Deployment
+
+This project is configured for GitHub Pages deployment:
+
+1. Push to your GitHub repository
+2. Go to repository Settings → Pages
+3. Set source to "Deploy from branch"
+4. Select branch (usually `main` or `claude/contango-custom-ui-*`)
+5. Select `/` (root) folder
+6. Save
+
+Your site will be live at: `https://[username].github.io/[repository-name]/`
+
+### Local Development
+
+Simply open `index.html` or `contango-custom.html` in any modern web browser. No build process required!
