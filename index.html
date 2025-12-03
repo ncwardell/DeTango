@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DeTango - Fee-free Contango custom position builder for Base chain">
+  <meta name="keywords" content="Contango, DeFi, Base, leverage, trading, custom positions">
+  <title>DeTango - Custom Contango Positions</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Mono:wght@700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2d1b3d 100%);
+      font-family: 'JetBrains Mono', monospace;
+      color: #e0e6ff;
+      padding: 40px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 800px;
+      text-align: center;
+    }
+
+    .logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 4rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #00ffaa, #00d4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 20px;
+      letter-spacing: -2px;
+      animation: slideIn 0.6s ease-out;
+    }
+
+    .tagline {
+      font-size: 1.2rem;
+      color: #8b93b5;
+      margin-bottom: 40px;
+      letter-spacing: 2px;
+      animation: slideIn 0.7s ease-out;
+    }
+
+    .divider {
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, #00ffaa, #00d4ff);
+      margin: 30px auto;
+      animation: slideIn 0.8s ease-out;
+    }
+
+    .description {
+      font-size: 1rem;
+      color: #b8c0e0;
+      line-height: 1.8;
+      margin-bottom: 40px;
+      animation: slideIn 0.9s ease-out;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 40px 0;
+      text-align: left;
+    }
+
+    .feature {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 255, 170, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      animation: slideIn 1s ease-out;
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .feature-title {
+      color: #00ffaa;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .feature-text {
+      color: #8b93b5;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .cta-button {
+      display: inline-block;
+      margin-top: 40px;
+      padding: 20px 60px;
+      background: linear-gradient(135deg, #00ffaa, #00d4ff);
+      color: #0a0e27;
+      text-decoration: none;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: slideIn 1.1s ease-out;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 15px 40px rgba(0, 255, 170, 0.4);
+    }
+
+    .warning {
+      margin-top: 40px;
+      padding: 20px;
+      background: rgba(255, 200, 0, 0.05);
+      border: 1px solid rgba(255, 200, 0, 0.2);
+      border-radius: 12px;
+      font-size: 0.85rem;
+      color: #ffc857;
+      animation: slideIn 1.2s ease-out;
+    }
+
+    .footer {
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.8rem;
+      color: #5a5f7d;
+      animation: slideIn 1.3s ease-out;
+    }
+
+    .footer a {
+      color: #00d4ff;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer a:hover {
+      color: #00ffaa;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .logo {
+        font-size: 2.5rem;
+      }
+
+      .tagline {
+        font-size: 0.9rem;
+      }
+
+      .cta-button {
+        padding: 16px 40px;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="logo">DeTango</h1>
+    <p class="tagline">Custom Contango Positions</p>
+    <div class="divider"></div>
+
+    <p class="description">
+      Build custom leveraged positions on Contango with <strong>any token pair</strong> and money market combination on Base.
+      No UI fees. Full control. Direct smart contract interaction.
+    </p>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🎯</div>
+        <div class="feature-title">Custom Pairs</div>
+        <div class="feature-text">Create positions with ANY token combination, not limited to pre-configured pairs</div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Zero UI Fees</div>
+        <div class="feature-text">Direct contract interaction means no interface fees - only protocol costs</div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Real-time Metrics</div>
+        <div class="feature-text">Live leverage, LTV ratio, and liquidation price calculations</div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">🔄</div>
+        <div class="feature-title">DAI/USDS Loop</div>
+        <div class="feature-text">Preset for stablecoin leverage loops not available in the main UI</div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">🛡️</div>
+        <div class="feature-title">Smart Approvals</div>
+        <div class="feature-text">Automatic token approval detection and one-click authorization</div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">💼</div>
+        <div class="feature-title">Multi-Wallet</div>
+        <div class="feature-text">Works with Rabby, MetaMask, Coinbase Wallet, and more</div>
+      </div>
+    </div>
+
+    <a href="contango-custom.html" class="cta-button">Launch App</a>
+
+    <div class="warning">
+      ⚠️ <strong>Advanced users only.</strong> This tool provides direct smart contract access.
+      Always verify token addresses on BaseScan and understand position mechanics before trading.
+      While this UI is fee-free, standard protocol fees still apply.
+    </div>
+
+    <div class="footer">
+      <p>Built on <a href="https://contango.xyz/" target="_blank" rel="noopener noreferrer">Contango Protocol</a> •
+      Deployed on <a href="https://base.org/" target="_blank" rel="noopener noreferrer">Base</a></p>
+      <p style="margin-top: 10px;">Not affiliated with Contango. Use at your own risk.</p>
+    </div>
+  </div>
+</body>
+</html>
