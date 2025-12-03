@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contango Direct Interface - Custom Positions</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Mono:wght@700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2d1b3d 100%);
+      font-family: 'JetBrains Mono', monospace;
+      color: #e0e6ff;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    input, button, select {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #00ffaa !important;
+    }
+
+    button {
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 255, 170, 0.3);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .loading {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+      animation: slideIn 0.6s ease-out;
+    }
+
+    .title {
+      font-family: 'Space Mono', monospace;
+      font-size: 3.5rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #00ffaa, #00d4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+      letter-spacing: -2px;
+    }
+
+    .subtitle {
+      color: #8b93b5;
+      font-size: 0.9rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .divider {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, #00ffaa, #00d4ff);
+      margin: 20px auto;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 255, 170, 0.2);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+
+    .wallet-card {
+      animation: slideIn 0.7s ease-out;
+    }
+
+    .form-card {
+      padding: 40px;
+      animation: slideIn 0.8s ease-out;
+    }
+
+    .connect-btn {
+      background: linear-gradient(135deg, #00ffaa, #00d4ff);
+      color: #0a0e27;
+      border: none;
+      padding: 16px 40px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      width: 100%;
+    }
+
+    .wallet-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .wallet-label {
+      font-size: 0.75rem;
+      color: #8b93b5;
+      margin-bottom: 5px;
+    }
+
+    .wallet-address {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #00ffaa;
+    }
+
+    .wallet-type {
+      font-size: 0.8rem;
+      color: #8b93b5;
+      margin-top: 3px;
+    }
+
+    .disconnect-btn {
+      background: rgba(255, 255, 255, 0.05);
+      color: #e0e6ff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .form-title {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      color: #e0e6ff;
+      font-weight: 600;
+    }
+
+    .form-subtitle {
+      font-size: 0.85rem;
+      color: #8b93b5;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      color: #8b93b5;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .form-help {
+      display: block;
+      font-size: 0.75rem;
+      color: #5a5f7d;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #e0e6ff;
+      font-size: 0.95rem;
+    }
+
+    .form-select {
+      cursor: pointer;
+    }
+
+    .form-input::placeholder {
+      color: #5a5f7d;
+    }
+
+    .form-input.address-input {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    .token-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 640px) {
+      .token-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      color: #00ffaa;
+      margin: 30px 0 20px 0;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #00ffaa, #00d4ff);
+      color: #0a0e27;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-top: 10px;
+    }
+
+    .submit-btn:disabled {
+      background: rgba(255, 255, 255, 0.1);
+      color: #8b93b5;
+    }
+
+    .alert {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+
+    .alert-error {
+      background: rgba(255, 68, 68, 0.1);
+      border: 1px solid rgba(255, 68, 68, 0.3);
+      color: #ff6b6b;
+    }
+
+    .alert-success {
+      background: rgba(0, 255, 170, 0.1);
+      border: 1px solid rgba(0, 255, 170, 0.3);
+      color: #00ffaa;
+    }
+
+    .alert-info {
+      background: rgba(0, 170, 255, 0.1);
+      border: 1px solid rgba(0, 170, 255, 0.3);
+      color: #00aaff;
+    }
+
+    .tx-label {
+      font-size: 0.75rem;
+      color: #8b93b5;
+      margin-bottom: 5px;
+    }
+
+    .tx-link {
+      color: #00ffaa;
+      font-size: 0.85rem;
+      word-break: break-all;
+      text-decoration: none;
+    }
+
+    .tx-link:hover {
+      text-decoration: underline;
+    }
+
+    .info-card {
+      margin-top: 30px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      font-size: 0.8rem;
+      color: #8b93b5;
+      animation: slideIn 0.9s ease-out;
+    }
+
+    .info-card div {
+      margin-bottom: 8px;
+    }
+
+    .info-card strong {
+      color: #e0e6ff;
+    }
+
+    .disclaimer {
+      margin-top: 20px;
+      padding: 16px;
+      background: rgba(255, 200, 0, 0.05);
+      border: 1px solid rgba(255, 200, 0, 0.2);
+      border-radius: 10px;
+      font-size: 0.8rem;
+      color: #ffc857;
+      text-align: center;
+      animation: slideIn 1s ease-out;
+    }
+
+    .example-box {
+      background: rgba(0, 170, 255, 0.05);
+      border: 1px solid rgba(0, 170, 255, 0.2);
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: #8b93b5;
+    }
+
+    .example-box strong {
+      color: #00aaff;
+    }
+
+    .example-box code {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #00ffaa;
+      font-size: 0.8rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1 class="title">CONTANGO</h1>
+      <p class="subtitle">Custom Position Builder</p>
+      <div class="divider"></div>
+    </div>
+
+    <!-- Info Alert -->
+    <div class="alert alert-info" style="animation: slideIn 0.6s ease-out;">
+      <strong>🎯 Create Custom Positions:</strong> This interface lets you open positions with any token pair and money market combination on Base. Specify your base token, quote token, and money market to create positions not available in the standard UI.
+    </div>
+
+    <!-- Wallet Connection -->
+    <div class="card wallet-card">
+      <div id="connectSection">
+        <button class="connect-btn" onclick="connectWallet()">Connect Wallet (MetaMask, Rabby, etc.)</button>
+      </div>
+      <div id="walletSection" class="hidden">
+        <div class="wallet-info">
+          <div>
+            <div class="wallet-label">CONNECTED</div>
+            <div class="wallet-address" id="walletAddress"></div>
+            <div class="wallet-type" id="walletType"></div>
+          </div>
+          <button class="disconnect-btn" onclick="disconnectWallet()">Disconnect</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Form -->
+    <div class="card form-card">
+      <h2 class="form-title">Build Custom Position</h2>
+      <p class="form-subtitle">
+        Define your position by specifying the token addresses and money market. The instrument symbol will be automatically generated from your inputs.
+      </p>
+
+      <div class="section-title">Token Pair Configuration</div>
+      
+      <div class="token-grid">
+        <!-- Base Token -->
+        <div class="form-group">
+          <label class="form-label">Base Token Address *</label>
+          <input type="text" id="baseToken" class="form-input address-input" placeholder="0x..." />
+          <span class="form-help">The token you want to long/short (e.g., WETH)</span>
+        </div>
+
+        <!-- Quote Token -->
+        <div class="form-group">
+          <label class="form-label">Quote Token Address *</label>
+          <input type="text" id="quoteToken" class="form-input address-input" placeholder="0x..." />
+          <span class="form-help">The collateral/pricing token (e.g., USDC)</span>
+        </div>
+      </div>
+
+      <!-- Money Market -->
+      <div class="form-group">
+        <label class="form-label">Money Market ID *</label>
+        <select id="moneyMarket" class="form-select">
+          <option value="">Select Money Market</option>
+          <option value="aave">Aave</option>
+          <option value="compound">Compound</option>
+          <option value="moonwell">Moonwell</option>
+          <option value="sonne">Sonne</option>
+          <option value="seamless">Seamless</option>
+          <option value="custom">Custom (Enter ID)</option>
+        </select>
+        <span class="form-help">The lending protocol to use for position</span>
+      </div>
+
+      <!-- Custom Market ID (shown when custom is selected) -->
+      <div id="customMarketSection" class="form-group hidden">
+        <label class="form-label">Custom Market ID</label>
+        <input type="text" id="customMarketId" class="form-input" placeholder="Enter market identifier" />
+      </div>
+
+      <div class="section-title">Position Parameters</div>
+
+      <!-- Position Side -->
+      <div class="form-group">
+        <label class="form-label">Position Side *</label>
+        <select id="side" class="form-select">
+          <option value="long">Long (Buy Base with Quote)</option>
+          <option value="short">Short (Sell Base for Quote)</option>
+        </select>
+      </div>
+
+      <!-- Quantity -->
+      <div class="form-group">
+        <label class="form-label">Quantity *</label>
+        <input type="text" id="quantity" class="form-input" placeholder="0.0" />
+        <span class="form-help">Amount of base token for the position</span>
+      </div>
+
+      <!-- Limit Price -->
+      <div class="form-group">
+        <label class="form-label">Limit Price (optional)</label>
+        <input type="text" id="limitPrice" class="form-input" placeholder="0.0" />
+        <span class="form-help">Maximum acceptable price (0 for market price)</span>
+      </div>
+
+      <!-- Collateral Amount -->
+      <div class="form-group">
+        <label class="form-label">Collateral / Cashflow (optional)</label>
+        <input type="text" id="cashflow" class="form-input" placeholder="0.0" />
+        <span class="form-help">Additional collateral to deposit</span>
+      </div>
+
+      <!-- Collateral Currency -->
+      <div class="form-group">
+        <label class="form-label">Collateral Currency</label>
+        <select id="cashflowCcy" class="form-select">
+          <option value="0">Base Token</option>
+          <option value="1">Quote Token</option>
+        </select>
+      </div>
+
+      <!-- Generated Symbol Preview -->
+      <div class="alert alert-info">
+        <strong>Generated Instrument Symbol:</strong>
+        <div id="symbolPreview" style="margin-top: 8px; font-family: 'JetBrains Mono', monospace; font-size: 1rem;">
+          Fill in fields to generate symbol
+        </div>
+      </div>
+
+      <button id="submitBtn" class="submit-btn" onclick="openPosition()" disabled>
+        Execute Trade
+      </button>
+
+      <!-- Error/Success Messages -->
+      <div id="errorMsg" class="alert alert-error hidden"></div>
+      <div id="successMsg" class="alert alert-success hidden"></div>
+    </div>
+
+    <!-- Example Section -->
+    <div class="card" style="animation: slideIn 0.85s ease-out;">
+      <h3 style="color: #00aaff; margin-bottom: 15px; font-size: 1.1rem;">📝 Example: WETH/USDC Long on Aave</h3>
+      <div class="example-box">
+        <div style="margin-bottom: 10px;"><strong>Base Token (WETH):</strong> <code>0x4200000000000000000000000000000000000006</code></div>
+        <div style="margin-bottom: 10px;"><strong>Quote Token (USDC):</strong> <code>0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913</code></div>
+        <div style="margin-bottom: 10px;"><strong>Money Market:</strong> Aave</div>
+        <div style="margin-bottom: 10px;"><strong>Side:</strong> Long</div>
+        <div><strong>Quantity:</strong> 1.0 (1 WETH)</div>
+      </div>
+      <p style="margin-top: 15px; font-size: 0.85rem; color: #8b93b5;">
+        This creates a leveraged long position on WETH using USDC as collateral through Aave on Base.
+      </p>
+    </div>
+
+    <!-- Contract Info -->
+    <div class="info-card">
+      <div><strong>Contract:</strong> 0xa6a147946FACAc9E0B99824870B36088764f969F</div>
+      <div><strong>Network:</strong> Base Chain (Chain ID: 8453)</div>
+      <div><strong>Function:</strong> trade() via multicall</div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+      ⚠️ Advanced users only. Verify all token addresses on BaseScan before trading. This UI charges no fees but understand the protocol mechanics before use.
+    </div>
+  </div>
+
+  <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+  <script>
+    const CONTANGO_PROXY = '0xa6a147946FACAc9E0B99824870B36088764f969F';
+    const BASE_CHAIN_ID = 8453;
+
+    const CONTANGO_ABI = [
+      "function trade(tuple(bytes32 symbol, address trader, uint256 quantity, int256 limitPrice, int256 cashflow, uint8 cashflowCcy) tradeParams) external payable returns (tuple(bytes32 positionId, address trader, uint256 openQuantity, uint256 openCost, int256 collateral, uint256 totalFees, int256 liquidationPrice))",
+      "function multicall(bytes[] calldata data) external payable returns (bytes[] memory results)"
+    ];
+
+    let provider = null;
+    let signer = null;
+    let account = '';
+    let walletName = '';
+
+    // Update symbol preview when inputs change
+    document.addEventListener('DOMContentLoaded', () => {
+      ['baseToken', 'quoteToken', 'moneyMarket', 'side'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.addEventListener('input', updateSymbolPreview);
+          element.addEventListener('change', updateSymbolPreview);
+        }
+      });
+
+      document.getElementById('moneyMarket').addEventListener('change', (e) => {
+        const customSection = document.getElementById('customMarketSection');
+        if (e.target.value === 'custom') {
+          customSection.classList.remove('hidden');
+        } else {
+          customSection.classList.add('hidden');
+        }
+      });
+    });
+
+    function updateSymbolPreview() {
+      const baseToken = document.getElementById('baseToken').value;
+      const quoteToken = document.getElementById('quoteToken').value;
+      const moneyMarket = document.getElementById('moneyMarket').value;
+      const side = document.getElementById('side').value;
+
+      if (baseToken && quoteToken && moneyMarket) {
+        // This is a simplified symbol generation
+        // In reality, Contango has a specific format that includes the market ID
+        const baseShort = baseToken.substring(2, 8).toUpperCase();
+        const quoteShort = quoteToken.substring(2, 8).toUpperCase();
+        const marketId = moneyMarket === 'custom' ? document.getElementById('customMarketId').value : moneyMarket.toUpperCase();
+        const symbol = `${baseShort}${quoteShort}-${marketId}`;
+        document.getElementById('symbolPreview').textContent = symbol;
+      } else {
+        document.getElementById('symbolPreview').textContent = 'Fill in fields to generate symbol';
+      }
+    }
+
+    window.addEventListener('load', async () => {
+      if (typeof window.ethereum !== 'undefined') {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts.length > 0) {
+          await connectWallet();
+        }
+      }
+    });
+
+    async function detectWalletType() {
+      if (window.ethereum) {
+        if (window.ethereum.isRabby) return 'Rabby Wallet';
+        if (window.ethereum.isMetaMask) return 'MetaMask';
+        if (window.ethereum.isCoinbaseWallet) return 'Coinbase Wallet';
+        if (window.ethereum.isBraveWallet) return 'Brave Wallet';
+        if (window.ethereum.isFrame) return 'Frame';
+        return 'Web3 Wallet';
+      }
+      return 'Unknown';
+    }
+
+    async function connectWallet() {
+      try {
+        hideError();
+        hideSuccess();
+
+        if (typeof window.ethereum === 'undefined') {
+          showError('Please install a Web3 wallet (MetaMask, Rabby, etc.)');
+          return;
+        }
+
+        // Detect wallet type
+        walletName = await detectWalletType();
+
+        provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+        
+        // Request accounts
+        const accounts = await provider.send('eth_requestAccounts', []);
+        const network = await provider.getNetwork();
+
+        if (network.chainId !== BASE_CHAIN_ID) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: `0x${BASE_CHAIN_ID.toString(16)}` }],
+            });
+            // Reinitialize provider after network switch
+            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+          } catch (switchError) {
+            if (switchError.code === 4902) {
+              // Try to add the network
+              try {
+                await window.ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [{
+                    chainId: `0x${BASE_CHAIN_ID.toString(16)}`,
+                    chainName: 'Base',
+                    nativeCurrency: {
+                      name: 'Ethereum',
+                      symbol: 'ETH',
+                      decimals: 18
+                    },
+                    rpcUrls: ['https://mainnet.base.org'],
+                    blockExplorerUrls: ['https://basescan.org']
+                  }]
+                });
+                provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+              } catch (addError) {
+                showError('Failed to add Base network. Please add it manually.');
+                return;
+              }
+            } else {
+              showError('Failed to switch to Base network: ' + switchError.message);
+              return;
+            }
+          }
+        }
+
+        signer = provider.getSigner();
+        account = accounts[0];
+
+        document.getElementById('walletAddress').textContent = formatAddress(account);
+        document.getElementById('walletType').textContent = walletName;
+        document.getElementById('connectSection').classList.add('hidden');
+        document.getElementById('walletSection').classList.remove('hidden');
+        document.getElementById('submitBtn').disabled = false;
+      } catch (err) {
+        showError('Failed to connect wallet: ' + err.message);
+      }
+    }
+
+    function disconnectWallet() {
+      provider = null;
+      signer = null;
+      account = '';
+      walletName = '';
+
+      document.getElementById('connectSection').classList.remove('hidden');
+      document.getElementById('walletSection').classList.add('hidden');
+      document.getElementById('submitBtn').disabled = true;
+      hideError();
+      hideSuccess();
+    }
+
+    async function openPosition() {
+      try {
+        hideError();
+        hideSuccess();
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Processing...';
+        submitBtn.classList.add('loading');
+
+        if (!signer) {
+          throw new Error('Please connect your wallet');
+        }
+
+        // Get form values
+        const baseToken = document.getElementById('baseToken').value.trim();
+        const quoteToken = document.getElementById('quoteToken').value.trim();
+        const moneyMarket = document.getElementById('moneyMarket').value;
+        const quantity = document.getElementById('quantity').value;
+        const side = document.getElementById('side').value;
+        const limitPrice = document.getElementById('limitPrice').value;
+        const cashflow = document.getElementById('cashflow').value;
+        const cashflowCcy = document.getElementById('cashflowCcy').value;
+
+        // Validate inputs
+        if (!baseToken || !quoteToken || !moneyMarket || !quantity) {
+          throw new Error('Please fill in all required fields');
+        }
+
+        if (!ethers.utils.isAddress(baseToken)) {
+          throw new Error('Invalid base token address');
+        }
+
+        if (!ethers.utils.isAddress(quoteToken)) {
+          throw new Error('Invalid quote token address');
+        }
+
+        // Generate instrument symbol
+        // Format: BASE-QUOTE-MARKET (this is simplified - real format may vary)
+        const marketId = moneyMarket === 'custom' ? 
+          document.getElementById('customMarketId').value : 
+          moneyMarket.toUpperCase();
+        
+        // Create a symbol from the addresses and market
+        // Contango uses a specific format - this is an approximation
+        const symbolString = `${baseToken.substring(2, 10)}-${quoteToken.substring(2, 10)}-${marketId}`.toUpperCase();
+        const symbolBytes32 = ethers.utils.formatBytes32String(symbolString);
+        
+        const contract = new ethers.Contract(CONTANGO_PROXY, CONTANGO_ABI, signer);
+
+        // Convert values
+        const quantityWei = ethers.utils.parseUnits(quantity, 18);
+        const limitPriceWei = limitPrice ? ethers.utils.parseUnits(limitPrice, 18) : 0;
+        const cashflowWei = cashflow ? ethers.utils.parseUnits(cashflow, 18) : 0;
+
+        const tradeParams = {
+          symbol: symbolBytes32,
+          trader: account,
+          quantity: quantityWei,
+          limitPrice: limitPriceWei,
+          cashflow: cashflowWei,
+          cashflowCcy: parseInt(cashflowCcy)
+        };
+
+        const tx = await contract.trade(tradeParams);
+        
+        showSuccess(`
+          <div class="tx-label">TRANSACTION SUBMITTED</div>
+          <a href="https://basescan.org/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
+            ${tx.hash}
+          </a>
+          <div style="margin-top: 10px; font-size: 0.85rem;">Waiting for confirmation...</div>
+        `);
+
+        await tx.wait();
+        
+        showSuccess(`
+          <div class="tx-label">POSITION OPENED!</div>
+          <a href="https://basescan.org/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
+            ${tx.hash}
+          </a>
+          <div style="margin-top: 10px; font-size: 0.85rem;">Your custom position is now active.</div>
+        `);
+
+      } catch (err) {
+        console.error('Error:', err);
+        let errorMsg = 'Transaction failed: ';
+        if (err.code === 4001) {
+          errorMsg += 'Transaction rejected by user';
+        } else if (err.reason) {
+          errorMsg += err.reason;
+        } else {
+          errorMsg += err.message || err.toString();
+        }
+        showError(errorMsg);
+      } finally {
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Execute Trade';
+        submitBtn.classList.remove('loading');
+      }
+    }
+
+    function formatAddress(addr) {
+      if (!addr) return '';
+      return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+    }
+
+    function showError(message) {
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.innerHTML = message;
+      errorMsg.classList.remove('hidden');
+    }
+
+    function hideError() {
+      document.getElementById('errorMsg').classList.add('hidden');
+    }
+
+    function showSuccess(message) {
+      const successMsg = document.getElementById('successMsg');
+      successMsg.innerHTML = message;
+      successMsg.classList.remove('hidden');
+    }
+
+    function hideSuccess() {
+      document.getElementById('successMsg').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
