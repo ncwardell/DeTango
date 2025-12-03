@@ -1019,6 +1019,7 @@
     let CONTANGO_PROXY = '';
     let PRESETS = {};
     let AVAILABLE_INSTRUMENTS = {};
+    let TOKEN_ADDRESSES = {};
 
     let provider = null;
     let signer = null;
@@ -1040,6 +1041,18 @@
       } catch (err) {
         console.error('Error loading available instruments:', err);
         // Non-fatal error - continue without instrument list
+      }
+    }
+
+    // Load token addresses from JSON
+    async function loadTokenAddresses() {
+      try {
+        const response = await fetch('token-addresses.json');
+        TOKEN_ADDRESSES = await response.json();
+        console.log('Token addresses loaded:', TOKEN_ADDRESSES);
+      } catch (err) {
+        console.error('Error loading token addresses:', err);
+        // Non-fatal error - continue without token addresses
       }
     }
 
@@ -1306,9 +1319,39 @@
       const baseSymbol = parts[0];
       const quoteSymbol = parts[1];
 
-      // We need to get the token addresses from the network config
-      // For now, show a message that they need to fill in addresses
-      showSuccess(`Selected: ${symbolString}. Please enter the token addresses for ${baseSymbol} and ${quoteSymbol} on ${currentNetwork.name}`);
+      // Get network key
+      const networkKey = Object.keys(NETWORKS).find(key => NETWORKS[key] === currentNetwork);
+
+      if (!networkKey || !TOKEN_ADDRESSES[networkKey]) {
+        showError(`Token addresses not available for ${currentNetwork.name}`);
+        return;
+      }
+
+      const networkTokens = TOKEN_ADDRESSES[networkKey];
+
+      // Look up token addresses
+      const baseAddress = networkTokens[baseSymbol];
+      const quoteAddress = networkTokens[quoteSymbol];
+
+      if (!baseAddress) {
+        showError(`Token address not found for ${baseSymbol} on ${currentNetwork.name}`);
+        return;
+      }
+
+      if (!quoteAddress) {
+        showError(`Token address not found for ${quoteSymbol} on ${currentNetwork.name}`);
+        return;
+      }
+
+      // Auto-fill the form
+      document.getElementById('baseToken').value = baseAddress;
+      document.getElementById('quoteToken').value = quoteAddress;
+
+      // Load token info if wallet is connected
+      if (account) {
+        loadTokenInfo('base');
+        loadTokenInfo('quote');
+      }
 
       // Close the browser
       document.getElementById('instrumentsBrowser').classList.add('hidden');
@@ -1317,7 +1360,8 @@
       // Update the symbol preview
       updateSymbolPreview();
 
-      setTimeout(hideSuccess, 5000);
+      showSuccess(`✅ Selected: ${symbolString} - Addresses auto-filled!`);
+      setTimeout(hideSuccess, 3000);
     }
 
     // Clear form
@@ -2089,10 +2133,11 @@
       if (connectBtn) connectBtn.disabled = true;
 
       try {
-        // Load networks and instruments
+        // Load networks, instruments, and token addresses
         await Promise.all([
           loadNetworks(),
-          loadAvailableInstruments()
+          loadAvailableInstruments(),
+          loadTokenAddresses()
         ]);
 
         // Initialize Web3Modal
