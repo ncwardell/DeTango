@@ -855,6 +855,11 @@
           📋 Browse Available
         </button>
       </div>
+      <div style="margin-top: 10px;">
+        <button class="preset-btn" onclick="bruteForceSymbol()" style="width: 100%; padding: 10px; font-size: 0.85rem; background: rgba(255, 200, 0, 0.1); border-color: rgba(255, 200, 0, 0.3); color: #ffc857;">
+          🔬 Debug: Try ALL Symbol Formats
+        </button>
+      </div>
 
       <button id="submitBtn" class="submit-btn" onclick="openPosition()" disabled>
         Execute Trade
@@ -2010,6 +2015,160 @@
       } catch (err) {
         console.error('Error disconnecting wallet:', err);
         handleWalletDisconnected(); // Force disconnect UI even on error
+      }
+    }
+
+    // Brute force try all possible symbol formats
+    async function bruteForceSymbol() {
+      try {
+        const instrumentInfoDiv = document.getElementById('instrumentInfo');
+        const debugBtn = event.target;
+        const originalBtnText = debugBtn.textContent;
+
+        debugBtn.disabled = true;
+        debugBtn.textContent = 'Testing formats...';
+        debugBtn.classList.add('loading');
+
+        hideError();
+        hideSuccess();
+        instrumentInfoDiv.classList.add('hidden');
+
+        if (typeof ethers === 'undefined') {
+          throw new Error('Ethers library not loaded. Please refresh the page.');
+        }
+
+        const baseToken = document.getElementById('baseToken').value.trim();
+        const quoteToken = document.getElementById('quoteToken').value.trim();
+        const moneyMarket = document.getElementById('moneyMarket').value;
+
+        if (!baseToken || !quoteToken || !moneyMarket) {
+          throw new Error('Please fill in base token, quote token, and money market first');
+        }
+
+        if (!ethers.utils.isAddress(baseToken) || !ethers.utils.isAddress(quoteToken)) {
+          throw new Error('Invalid token addresses');
+        }
+
+        // Load token info if not already loaded
+        if (!baseTokenInfo.symbol || !quoteTokenInfo.symbol) {
+          showSuccess('Loading token information...');
+          await Promise.all([
+            loadTokenInfo('base'),
+            loadTokenInfo('quote')
+          ]);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        const marketId = moneyMarket === 'custom' ?
+          document.getElementById('customMarketId').value :
+          moneyMarket.toUpperCase();
+
+        const baseSymbol = baseTokenInfo.symbol || baseToken.substring(2, 8).toUpperCase();
+        const quoteSymbol = quoteTokenInfo.symbol || quoteToken.substring(2, 8).toUpperCase();
+
+        if (!provider || !CONTANGO_PROXY) {
+          throw new Error('Please connect your wallet first');
+        }
+
+        const contract = new ethers.Contract(CONTANGO_PROXY, CONTANGO_ABI, provider);
+
+        // Generate ALL possible format combinations
+        const formats = [
+          // With market ID
+          `${baseSymbol}${quoteSymbol}-${marketId}`,
+          `${baseSymbol}/${quoteSymbol}-${marketId}`,
+          `${baseSymbol}-${quoteSymbol}-${marketId}`,
+          `${baseSymbol}${quoteSymbol}${marketId}`,
+          `${baseSymbol}/${quoteSymbol}/${marketId}`,
+          `${baseSymbol}_${quoteSymbol}_${marketId}`,
+          // Lowercase market
+          `${baseSymbol}${quoteSymbol}-${marketId.toLowerCase()}`,
+          `${baseSymbol}/${quoteSymbol}-${marketId.toLowerCase()}`,
+          // Without market ID
+          `${baseSymbol}${quoteSymbol}`,
+          `${baseSymbol}/${quoteSymbol}`,
+          `${baseSymbol}-${quoteSymbol}`,
+          // With 'c' prefix (for Contango)
+          `c${baseSymbol}${quoteSymbol}`,
+          `c${baseSymbol}/${quoteSymbol}`,
+          // Short names
+          `${baseSymbol.substring(0, 4)}${quoteSymbol.substring(0, 4)}`,
+          // Weird formats
+          `${baseSymbol.toLowerCase()}${quoteSymbol.toLowerCase()}`,
+          `${baseSymbol.toUpperCase()}${quoteSymbol.toUpperCase()}`,
+        ];
+
+        console.log(`Testing ${formats.length} different symbol formats...`);
+
+        let results = [];
+
+        for (let i = 0; i < formats.length; i++) {
+          const format = formats[i];
+          try {
+            const bytes = ethers.utils.formatBytes32String(format);
+            const data = await contract.instrument(bytes);
+
+            // Found it!
+            console.log('✅ FOUND IT!', format, data);
+            results.push({ format, found: true, data });
+          } catch (e) {
+            console.log(`❌ Not found: ${format}`);
+            results.push({ format, found: false });
+          }
+        }
+
+        // Display results
+        const foundFormats = results.filter(r => r.found);
+
+        if (foundFormats.length > 0) {
+          let html = `<div><strong>✅ FOUND ${foundFormats.length} MATCHING FORMAT(S)!</strong></div>`;
+          html += '<div style="margin-top: 10px; font-size: 0.85rem;">';
+
+          foundFormats.forEach(result => {
+            html += `
+              <div style="margin: 10px 0; padding: 10px; background: rgba(0, 255, 170, 0.1); border-radius: 6px;">
+                <div style="color: #00ffaa; font-weight: 600;">Format: ${result.format}</div>
+                <div style="font-size: 0.75rem; margin-top: 4px;">Base: ${result.data.base}</div>
+                <div style="font-size: 0.75rem;">Quote: ${result.data.quote}</div>
+                <div style="font-size: 0.75rem;">Market: ${result.data.moneyMarket}</div>
+              </div>
+            `;
+          });
+
+          html += '</div>';
+          instrumentInfoDiv.innerHTML = html;
+        } else {
+          instrumentInfoDiv.innerHTML = `
+            <div><strong>❌ NO FORMATS WORKED</strong></div>
+            <div style="margin-top: 10px; font-size: 0.85rem;">
+              Tested ${formats.length} different formats - none matched an existing instrument.
+              <div style="margin-top: 10px; color: #8b93b5;">
+                This might mean:
+                <ul style="margin: 8px 0 0 20px;">
+                  <li>The instrument doesn't exist in Contango</li>
+                  <li>The contract address is wrong</li>
+                  <li>The symbol format is completely different than expected</li>
+                </ul>
+              </div>
+              <div style="margin-top: 10px; font-size: 0.75rem;">
+                Check console (F12) for full list of formats tried.
+              </div>
+            </div>
+          `;
+        }
+
+        instrumentInfoDiv.classList.remove('hidden');
+
+      } catch (err) {
+        console.error('Brute force error:', err);
+        showError('Debug failed: ' + (err.message || err.toString()));
+      } finally {
+        const debugBtn = document.querySelector('button[onclick="bruteForceSymbol()"]');
+        if (debugBtn) {
+          debugBtn.disabled = false;
+          debugBtn.textContent = '🔬 Debug: Try ALL Symbol Formats';
+          debugBtn.classList.remove('loading');
+        }
       }
     }
 
