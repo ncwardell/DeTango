@@ -672,6 +672,19 @@
         Define your position by specifying the token addresses and money market. The instrument symbol will be automatically generated from your inputs.
       </p>
 
+      <!-- Available Instruments Browser -->
+      <div style="margin-bottom: 20px;">
+        <button id="toggleInstrumentsBtn" class="preset-btn" onclick="toggleInstrumentsBrowser()" style="width: 100%; padding: 12px; background: rgba(0, 255, 170, 0.1); border-color: rgba(0, 255, 170, 0.3); color: #00ffaa;">
+          📋 Browse Available Instruments
+        </button>
+        <div id="instrumentsBrowser" class="hidden" style="margin-top: 15px; padding: 15px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 170, 0.2); border-radius: 10px; max-height: 300px; overflow-y: auto;">
+          <div style="font-size: 0.85rem; color: #8b93b5; margin-bottom: 10px;">
+            Select a money market below to see available instruments
+          </div>
+          <div id="instrumentsList"></div>
+        </div>
+      </div>
+
       <!-- Preset Configurations -->
       <div class="section-title">Quick Presets</div>
       <div class="preset-buttons">
@@ -1005,6 +1018,8 @@
     let currentNetwork = null;
     let CONTANGO_PROXY = '';
     let PRESETS = {};
+    let AVAILABLE_INSTRUMENTS = {};
+    let TOKEN_ADDRESSES = {};
 
     let provider = null;
     let signer = null;
@@ -1016,6 +1031,30 @@
     let baseTokenInfo = { balance: '0', decimals: 18, symbol: '', address: '' };
     let quoteTokenInfo = { balance: '0', decimals: 18, symbol: '', address: '' };
     let currentPrice = 1; // Approximate price (base/quote)
+
+    // Load available instruments from JSON
+    async function loadAvailableInstruments() {
+      try {
+        const response = await fetch('available-instruments.json');
+        AVAILABLE_INSTRUMENTS = await response.json();
+        console.log('Available instruments loaded:', AVAILABLE_INSTRUMENTS);
+      } catch (err) {
+        console.error('Error loading available instruments:', err);
+        // Non-fatal error - continue without instrument list
+      }
+    }
+
+    // Load token addresses from JSON
+    async function loadTokenAddresses() {
+      try {
+        const response = await fetch('token-addresses.json');
+        TOKEN_ADDRESSES = await response.json();
+        console.log('Token addresses loaded:', TOKEN_ADDRESSES);
+      } catch (err) {
+        console.error('Error loading token addresses:', err);
+        // Non-fatal error - continue without token addresses
+      }
+    }
 
     // Load network configuration from JSON
     async function loadNetworks() {
@@ -1072,6 +1111,12 @@
 
       // Clear form when switching networks
       clearForm();
+
+      // Update instruments list if browser is open
+      const browser = document.getElementById('instrumentsBrowser');
+      if (browser && !browser.classList.contains('hidden')) {
+        updateInstrumentsList();
+      }
 
       // If wallet is connected, check if we need to switch network
       if (provider && account) {
@@ -1197,6 +1242,125 @@
       }
 
       showSuccess(`Loaded preset: ${preset.name} - ${preset.description}`);
+      setTimeout(hideSuccess, 3000);
+    }
+
+    // Toggle instruments browser
+    function toggleInstrumentsBrowser() {
+      const browser = document.getElementById('instrumentsBrowser');
+      const btn = document.getElementById('toggleInstrumentsBtn');
+
+      if (browser.classList.contains('hidden')) {
+        browser.classList.remove('hidden');
+        btn.textContent = '🔼 Hide Instruments';
+        updateInstrumentsList();
+      } else {
+        browser.classList.add('hidden');
+        btn.textContent = '📋 Browse Available Instruments';
+      }
+    }
+
+    // Update instruments list based on current network and market
+    function updateInstrumentsList() {
+      const listDiv = document.getElementById('instrumentsList');
+
+      if (!currentNetwork) {
+        listDiv.innerHTML = '<div style="color: #ffc857; font-size: 0.85rem;">Please select a network first</div>';
+        return;
+      }
+
+      const moneyMarket = document.getElementById('moneyMarket').value;
+
+      if (!moneyMarket || moneyMarket === 'custom') {
+        listDiv.innerHTML = '<div style="color: #8b93b5; font-size: 0.85rem;">Please select a money market to see available instruments</div>';
+        return;
+      }
+
+      // Get network key (base, arbitrum, etc)
+      const networkKey = Object.keys(NETWORKS).find(key => NETWORKS[key] === currentNetwork);
+
+      if (!networkKey || !AVAILABLE_INSTRUMENTS[networkKey]) {
+        listDiv.innerHTML = '<div style="color: #8b93b5; font-size: 0.85rem;">No instruments data available for this network</div>';
+        return;
+      }
+
+      const instruments = AVAILABLE_INSTRUMENTS[networkKey][moneyMarket] || [];
+
+      if (instruments.length === 0) {
+        listDiv.innerHTML = `<div style="color: #8b93b5; font-size: 0.85rem;">No known instruments for ${moneyMarket.toUpperCase()} on ${currentNetwork.name}</div>`;
+        return;
+      }
+
+      // Display instruments as clickable buttons
+      let html = `<div style="font-size: 0.85rem; color: #00ffaa; margin-bottom: 10px; font-weight: 600;">${instruments.length} Available Instruments on ${moneyMarket.toUpperCase()}:</div>`;
+      html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px;">';
+
+      instruments.forEach(inst => {
+        html += `
+          <button class="preset-btn" onclick="selectInstrument('${inst}')" style="padding: 8px; font-size: 0.8rem; text-align: center;">
+            ${inst}
+          </button>
+        `;
+      });
+
+      html += '</div>';
+      listDiv.innerHTML = html;
+    }
+
+    // Select an instrument from the list
+    function selectInstrument(symbolString) {
+      // Parse symbol (e.g., "ETH/USDC" or "wstETH/USDC")
+      const parts = symbolString.split('/');
+      if (parts.length !== 2) {
+        showError('Invalid instrument format');
+        return;
+      }
+
+      const baseSymbol = parts[0];
+      const quoteSymbol = parts[1];
+
+      // Get network key
+      const networkKey = Object.keys(NETWORKS).find(key => NETWORKS[key] === currentNetwork);
+
+      if (!networkKey || !TOKEN_ADDRESSES[networkKey]) {
+        showError(`Token addresses not available for ${currentNetwork.name}`);
+        return;
+      }
+
+      const networkTokens = TOKEN_ADDRESSES[networkKey];
+
+      // Look up token addresses
+      const baseAddress = networkTokens[baseSymbol];
+      const quoteAddress = networkTokens[quoteSymbol];
+
+      if (!baseAddress) {
+        showError(`Token address not found for ${baseSymbol} on ${currentNetwork.name}`);
+        return;
+      }
+
+      if (!quoteAddress) {
+        showError(`Token address not found for ${quoteSymbol} on ${currentNetwork.name}`);
+        return;
+      }
+
+      // Auto-fill the form
+      document.getElementById('baseToken').value = baseAddress;
+      document.getElementById('quoteToken').value = quoteAddress;
+
+      // Load token info if wallet is connected
+      if (account) {
+        loadTokenInfo('base');
+        loadTokenInfo('quote');
+      }
+
+      // Close the browser
+      document.getElementById('instrumentsBrowser').classList.add('hidden');
+      document.getElementById('toggleInstrumentsBtn').textContent = '📋 Browse Available Instruments';
+
+      // Update the symbol preview
+      updateSymbolPreview();
+
+      showSuccess(`✅ Selected: ${symbolString} - Addresses auto-filled!`);
       setTimeout(hideSuccess, 3000);
     }
 
@@ -1555,6 +1719,12 @@
           customSection.classList.remove('hidden');
         } else {
           customSection.classList.add('hidden');
+        }
+
+        // Update instruments list if browser is open
+        const browser = document.getElementById('instrumentsBrowser');
+        if (browser && !browser.classList.contains('hidden')) {
+          updateInstrumentsList();
         }
       });
     });
@@ -1963,8 +2133,12 @@
       if (connectBtn) connectBtn.disabled = true;
 
       try {
-        // Load networks first
-        await loadNetworks();
+        // Load networks, instruments, and token addresses
+        await Promise.all([
+          loadNetworks(),
+          loadAvailableInstruments(),
+          loadTokenAddresses()
+        ]);
 
         // Initialize Web3Modal
         const success = await initWeb3Modal();
