@@ -872,7 +872,7 @@
     </div>
   </div>
 
-  <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <script type="module">
     import { createWeb3Modal, defaultConfig } from 'https://esm.sh/@web3modal/ethers5@3.5.0'
 
@@ -888,13 +888,21 @@
     // Wait for both ethers and Web3Modal to load
     let ethersReady = false;
     let web3ModalReady = false;
+    let ethersCheckAttempts = 0;
+    const MAX_ETHERS_CHECK_ATTEMPTS = 100; // 10 seconds max
 
     // Check if ethers is loaded
     function checkEthersReady() {
+      ethersCheckAttempts++;
+
       if (typeof ethers !== 'undefined') {
         ethersReady = true;
         console.log('Ethers.js loaded successfully');
         checkAllReady();
+      } else if (ethersCheckAttempts >= MAX_ETHERS_CHECK_ATTEMPTS) {
+        console.error('Ethers.js failed to load after 10 seconds');
+        // Show error and still proceed to prevent UI from being stuck
+        window.dispatchEvent(new Event('app-load-failed'));
       } else {
         setTimeout(checkEthersReady, 100);
       }
@@ -914,6 +922,32 @@
         window.dispatchEvent(new Event('app-ready'));
       }
     }
+
+    // Handle load failure
+    window.addEventListener('app-load-failed', () => {
+      console.error('Critical libraries failed to load');
+      const initMsg = document.getElementById('initializingMsg');
+      const connectBtn = document.getElementById('connectBtn');
+
+      if (initMsg) initMsg.classList.add('hidden');
+      if (connectBtn) {
+        connectBtn.disabled = false;
+        connectBtn.textContent = 'Connect Wallet';
+        connectBtn.classList.remove('loading');
+      }
+
+      // Show error with reload button
+      const errorMsg = document.getElementById('errorMsg');
+      if (errorMsg) {
+        errorMsg.innerHTML = `
+          <div style="margin-bottom: 10px;">Failed to load required libraries. This may be due to a network issue or content blocker.</div>
+          <button class="approval-btn" onclick="window.location.reload()" style="margin-top: 10px;">
+            Reload Page
+          </button>
+        `;
+        errorMsg.classList.remove('hidden');
+      }
+    });
 
     // Start checking for ethers
     checkEthersReady();
@@ -1714,6 +1748,8 @@
 
     async function connectWallet() {
       const connectBtn = document.querySelector('.connect-btn');
+      if (!connectBtn) return;
+
       const originalText = connectBtn.textContent;
 
       try {
@@ -1727,12 +1763,12 @@
 
         if (!currentNetwork) {
           showError('Please select a network first');
-          return;
+          throw new Error('No network selected');
         }
 
         if (!web3Modal) {
           showError('Wallet connection is initializing, please try again in a moment');
-          return;
+          throw new Error('Web3Modal not initialized');
         }
 
         console.log('Opening Web3Modal...');
@@ -1742,9 +1778,16 @@
         // The button will be re-enabled once the wallet section is shown
       } catch (err) {
         console.error('Error opening wallet modal:', err);
-        showError('Failed to open wallet selector: ' + (err.message || err.toString()));
 
-        // Re-enable button on error
+        // Only show error if not already shown
+        const errorMsg = document.getElementById('errorMsg');
+        if (errorMsg && !errorMsg.classList.contains('hidden')) {
+          // Error already shown, don't overwrite it
+        } else {
+          showError('Failed to open wallet selector: ' + (err.message || err.toString()));
+        }
+
+        // Always re-enable button on error
         connectBtn.disabled = false;
         connectBtn.textContent = originalText;
         connectBtn.classList.remove('loading');
@@ -2033,9 +2076,6 @@
       const errorMsg = document.getElementById('errorMsg');
       errorMsg.innerHTML = message;
       errorMsg.classList.remove('hidden');
-
-      // Scroll to error message
-      errorMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function hideError() {
