@@ -834,9 +834,12 @@
       </div>
 
       <!-- Instrument Check -->
-      <div style="margin-top: 15px;">
-        <button id="checkInstrumentBtn" class="preset-btn" onclick="checkInstrument()" style="width: 100%; padding: 12px; font-size: 0.9rem;">
-          🔍 Check if Instrument Exists
+      <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <button id="checkInstrumentBtn" class="preset-btn" onclick="checkInstrument()" style="padding: 12px; font-size: 0.9rem;">
+          🔍 Check if Exists
+        </button>
+        <button class="preset-btn" onclick="window.open('https://app.contango.xyz', '_blank')" style="padding: 12px; font-size: 0.9rem; background: rgba(0, 212, 255, 0.1); border-color: rgba(0, 212, 255, 0.3); color: #00d4ff;">
+          📋 Browse Available
         </button>
       </div>
 
@@ -867,6 +870,28 @@
       <p style="margin-top: 15px; font-size: 0.85rem; color: #8b93b5;">
         💡 Tip: Select your network above, then use preset buttons to auto-fill popular token pairs!
       </p>
+
+      <div style="margin-top: 20px; padding: 15px; background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px;">
+        <div style="font-weight: 600; color: #00d4ff; margin-bottom: 8px;">🔍 Finding Available Instruments</div>
+        <div style="font-size: 0.8rem; color: #8b93b5; line-height: 1.5;">
+          <p style="margin-bottom: 8px;">To see all available trading pairs:</p>
+          <ol style="margin-left: 20px; margin-bottom: 8px;">
+            <li>Visit <a href="https://app.contango.xyz" target="_blank" style="color: #00ffaa;">app.contango.xyz</a></li>
+            <li>Select your network (Base, Arbitrum, etc.)</li>
+            <li>Browse the available trading pairs</li>
+            <li>Copy the token addresses and use them here</li>
+          </ol>
+          <p style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0, 212, 255, 0.2);">
+            <strong>Alternative methods:</strong><br>
+            • Check Contango's <a href="https://docs.contango.xyz" target="_blank" style="color: #00ffaa;">documentation</a> for supported instruments<br>
+            • Query Contango's subgraph on The Graph Network<br>
+            • Use the "Browse Available" button above to open the official app
+          </p>
+          <p style="margin-top: 8px; padding: 8px; background: rgba(255, 200, 0, 0.05); border-radius: 6px; font-size: 0.75rem;">
+            ⚠️ <strong>Note:</strong> This interface cannot enumerate all instruments programmatically. Instruments must be pre-created by the Contango team before they can be traded.
+          </p>
+        </div>
+      </div>
     </div>
 
     <!-- Contract Info -->
