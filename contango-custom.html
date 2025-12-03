@@ -1231,6 +1231,9 @@
           await checkAllowance();
         }
 
+        // Update symbol preview with actual token symbols
+        updateSymbolPreview();
+
         calculateMetrics();
 
       } catch (err) {
@@ -1529,12 +1532,11 @@
       const side = document.getElementById('side').value;
 
       if (baseToken && quoteToken && moneyMarket) {
-        // This is a simplified symbol generation
-        // In reality, Contango has a specific format that includes the market ID
-        const baseShort = baseToken.substring(2, 8).toUpperCase();
-        const quoteShort = quoteToken.substring(2, 8).toUpperCase();
+        // Use actual token symbols if loaded, otherwise use address segments
+        const baseSymbol = baseTokenInfo.symbol || baseToken.substring(2, 8).toUpperCase();
+        const quoteSymbol = quoteTokenInfo.symbol || quoteToken.substring(2, 8).toUpperCase();
         const marketId = moneyMarket === 'custom' ? document.getElementById('customMarketId').value : moneyMarket.toUpperCase();
-        const symbol = `${baseShort}${quoteShort}-${marketId}`;
+        const symbol = `${baseSymbol}/${quoteSymbol}-${marketId}`;
         document.getElementById('symbolPreview').textContent = symbol;
       } else {
         document.getElementById('symbolPreview').textContent = 'Fill in fields to generate symbol';
@@ -1927,8 +1929,8 @@
         const limitPrice = document.getElementById('limitPrice').value;
 
         // Validate inputs
-        if (!baseToken || !quoteToken || !moneyMarket || !quantity) {
-          throw new Error('Please fill in all required fields');
+        if (!baseToken || !quoteToken || !moneyMarket || !quantity || !cashflow) {
+          throw new Error('Please fill in all required fields (base token, quote token, money market, quantity, and collateral)');
         }
 
         if (!ethers.utils.isAddress(baseToken)) {
@@ -1939,16 +1941,38 @@
           throw new Error('Invalid quote token address');
         }
 
-        // Generate instrument symbol
-        // Format: BASE-QUOTE-MARKET (this is simplified - real format may vary)
-        const marketId = moneyMarket === 'custom' ? 
-          document.getElementById('customMarketId').value : 
+        // Validate token info is loaded
+        if (!baseTokenInfo.symbol || !quoteTokenInfo.symbol) {
+          showError('Loading token information, please wait a moment...');
+          // Try to load token info
+          await Promise.all([
+            loadTokenInfo('base'),
+            loadTokenInfo('quote')
+          ]);
+          // Wait a bit for the info to populate
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          if (!baseTokenInfo.symbol || !quoteTokenInfo.symbol) {
+            throw new Error('Unable to load token information. Please check the token addresses and try again.');
+          }
+        }
+
+        // Generate instrument symbol using token symbols
+        const marketId = moneyMarket === 'custom' ?
+          document.getElementById('customMarketId').value :
           moneyMarket.toUpperCase();
-        
-        // Create a symbol from the addresses and market
-        // Contango uses a specific format - this is an approximation
-        const symbolString = `${baseToken.substring(2, 10)}-${quoteToken.substring(2, 10)}-${marketId}`.toUpperCase();
+
+        // Use actual token symbols if available, otherwise use address segments
+        let baseSymbol = baseTokenInfo.symbol || baseToken.substring(2, 8).toUpperCase();
+        let quoteSymbol = quoteTokenInfo.symbol || quoteToken.substring(2, 8).toUpperCase();
+
+        // Contango symbol format: BASE/QUOTE-MARKET (e.g., "WETH/USDC-AAVE")
+        const symbolString = `${baseSymbol}/${quoteSymbol}-${marketId}`;
+        console.log('Generated symbol:', symbolString);
+
+        // Convert to bytes32 - pad the string properly
         const symbolBytes32 = ethers.utils.formatBytes32String(symbolString);
+        console.log('Symbol bytes32:', symbolBytes32);
         
         // Determine decimals for conversion
         const baseDecimals = baseTokenInfo.decimals || 18;
@@ -1971,26 +1995,53 @@
           cashflowCcy: parseInt(cashflowCcy)
         };
 
-        const tx = await contract.trade(tradeParams);
+        console.log('Trade parameters:', {
+          symbolString,
+          symbol: symbolBytes32,
+          trader: account,
+          quantity: quantity + ' -> ' + quantityWei.toString(),
+          limitPrice: limitPrice + ' -> ' + limitPriceWei.toString(),
+          cashflow: cashflow + ' -> ' + cashflowWei.toString(),
+          cashflowCcy: cashflowCcy,
+          baseDecimals,
+          quoteDecimals,
+          cashflowDecimals
+        });
 
-        const explorerUrl = currentNetwork ? currentNetwork.explorerUrl : 'https://basescan.org';
-        showSuccess(`
-          <div class="tx-label">TRANSACTION SUBMITTED</div>
-          <a href="${explorerUrl}/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
-            ${tx.hash}
-          </a>
-          <div style="margin-top: 10px; font-size: 0.85rem;">Waiting for confirmation...</div>
-        `);
+        submitBtn.textContent = 'Sending transaction...';
 
-        await tx.wait();
+        try {
+          const tx = await contract.trade(tradeParams);
 
-        showSuccess(`
-          <div class="tx-label">POSITION OPENED!</div>
-          <a href="${explorerUrl}/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
-            ${tx.hash}
-          </a>
-          <div style="margin-top: 10px; font-size: 0.85rem;">Your custom position is now active.</div>
-        `);
+          const explorerUrl = currentNetwork ? currentNetwork.explorerUrl : 'https://basescan.org';
+          showSuccess(`
+            <div class="tx-label">TRANSACTION SUBMITTED</div>
+            <a href="${explorerUrl}/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
+              ${tx.hash}
+            </a>
+            <div style="margin-top: 10px; font-size: 0.85rem;">Waiting for confirmation...</div>
+          `);
+
+          submitBtn.textContent = 'Confirming...';
+          await tx.wait();
+
+          showSuccess(`
+            <div class="tx-label">POSITION OPENED!</div>
+            <a href="${explorerUrl}/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
+              ${tx.hash}
+            </a>
+            <div style="margin-top: 10px; font-size: 0.85rem;">Your custom position is now active.</div>
+          `);
+        } catch (txError) {
+          console.error('Transaction error:', txError);
+
+          // Provide more helpful error messages
+          if (txError.message && txError.message.includes('execution reverted')) {
+            throw new Error('Transaction would fail. This instrument may not exist or is not supported on this market. Please verify your token addresses and money market selection.');
+          }
+
+          throw txError;
+        }
 
       } catch (err) {
         console.error('Error:', err);
