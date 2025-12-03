@@ -1740,7 +1740,8 @@
         const baseSymbol = baseTokenInfo.symbol || baseToken.substring(2, 8).toUpperCase();
         const quoteSymbol = quoteTokenInfo.symbol || quoteToken.substring(2, 8).toUpperCase();
         const marketId = moneyMarket === 'custom' ? document.getElementById('customMarketId').value : moneyMarket.toUpperCase();
-        const symbol = `${baseSymbol}/${quoteSymbol}-${marketId}`;
+        // Use no-slash format: DAIUSDC-MOONWELL (not DAI/USDC-MOONWELL)
+        const symbol = `${baseSymbol}${quoteSymbol}-${marketId}`;
         document.getElementById('symbolPreview').textContent = symbol;
       } else {
         document.getElementById('symbolPreview').textContent = 'Fill in fields to generate symbol';
@@ -2062,7 +2063,9 @@
 
         const baseSymbol = baseTokenInfo.symbol || baseToken.substring(2, 8).toUpperCase();
         const quoteSymbol = quoteTokenInfo.symbol || quoteToken.substring(2, 8).toUpperCase();
-        const symbolString = `${baseSymbol}/${quoteSymbol}-${marketId}`;
+
+        // Try the no-slash format first (seems to be Contango's standard)
+        const symbolString = `${baseSymbol}${quoteSymbol}-${marketId}`;
         const symbolBytes32 = ethers.utils.formatBytes32String(symbolString);
 
         console.log('Checking instrument:', symbolString);
@@ -2284,9 +2287,20 @@
         let baseSymbol = baseTokenInfo.symbol || baseToken.substring(2, 8).toUpperCase();
         let quoteSymbol = quoteTokenInfo.symbol || quoteToken.substring(2, 8).toUpperCase();
 
-        // Contango symbol format: BASE/QUOTE-MARKET (e.g., "WETH/USDC-AAVE")
-        const symbolString = `${baseSymbol}/${quoteSymbol}-${marketId}`;
-        console.log('Generated symbol:', symbolString);
+        // Try different Contango symbol formats to find which one works
+        // Common formats: "BASE/QUOTE-MARKET", "BASEQUOTE-MARKET", "BASE-QUOTE-MARKET"
+        const possibleFormats = [
+          `${baseSymbol}${quoteSymbol}-${marketId}`, // No slash: DAIUSDC-MOONWELL
+          `${baseSymbol}/${quoteSymbol}-${marketId}`, // Slash: DAI/USDC-MOONWELL
+          `${baseSymbol}-${quoteSymbol}-${marketId}`, // Dash: DAI-USDC-MOONWELL
+          `${baseSymbol}${quoteSymbol}${marketId}`, // No separators: DAIUSDCMOONWELL
+          `${baseSymbol}/${quoteSymbol}-${marketId.toLowerCase()}` // Lowercase market: DAI/USDC-moonwell
+        ];
+
+        // Use the first format by default (no slash seems more common)
+        const symbolString = possibleFormats[0];
+        console.log('Generated symbol (trying format):', symbolString);
+        console.log('Alternative formats to try:', possibleFormats);
 
         // Convert to bytes32 - pad the string properly
         const symbolBytes32 = ethers.utils.formatBytes32String(symbolString);
