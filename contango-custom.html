@@ -642,14 +642,23 @@
       </div>
 
       <div id="connectSection">
-        <button class="connect-btn" onclick="connectWallet()">Connect Wallet</button>
+        <button class="connect-btn" onclick="connectWallet()" id="connectBtn">Connect Wallet</button>
+        <div id="initializingMsg" class="hidden" style="margin-top: 12px; text-align: center; font-size: 0.85rem; color: #8b93b5;">
+          <div class="loading">Initializing wallet connection...</div>
+        </div>
       </div>
       <div id="walletSection" class="hidden">
         <div class="wallet-info">
-          <div>
+          <div style="flex: 1;">
             <div class="wallet-label">CONNECTED</div>
-            <div class="wallet-address" id="walletAddress"></div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="wallet-address" id="walletAddress"></div>
+              <button class="max-btn" onclick="copyAddress()" style="padding: 6px 12px; font-size: 0.75rem;" title="Copy address">
+                📋
+              </button>
+            </div>
             <div class="wallet-type" id="walletType"></div>
+            <div class="wallet-type" id="walletBalance" style="color: #00ffaa; margin-top: 4px;">Balance: --</div>
           </div>
           <button class="disconnect-btn" onclick="disconnectWallet()">Disconnect</button>
         </div>
@@ -870,6 +879,44 @@
     // Make createWeb3Modal and defaultConfig globally available
     window.createWeb3Modal = createWeb3Modal;
     window.defaultConfig = defaultConfig;
+
+    // Signal that Web3Modal is loaded
+    window.web3ModalLoaded = true;
+    window.dispatchEvent(new Event('web3modal-loaded'));
+  </script>
+  <script>
+    // Wait for both ethers and Web3Modal to load
+    let ethersReady = false;
+    let web3ModalReady = false;
+
+    // Check if ethers is loaded
+    function checkEthersReady() {
+      if (typeof ethers !== 'undefined') {
+        ethersReady = true;
+        console.log('Ethers.js loaded successfully');
+        checkAllReady();
+      } else {
+        setTimeout(checkEthersReady, 100);
+      }
+    }
+
+    // Check if Web3Modal is loaded
+    window.addEventListener('web3modal-loaded', () => {
+      web3ModalReady = true;
+      console.log('Web3Modal loaded successfully');
+      checkAllReady();
+    });
+
+    // Check if all dependencies are ready
+    function checkAllReady() {
+      if (ethersReady && web3ModalReady) {
+        console.log('All dependencies loaded, initializing app...');
+        window.dispatchEvent(new Event('app-ready'));
+      }
+    }
+
+    // Start checking for ethers
+    checkEthersReady();
   </script>
   <script>
     const CONTANGO_ABI = [
@@ -1111,6 +1158,12 @@
     async function loadTokenInfo(tokenType) {
       if (!signer || !account) return;
 
+      // Check if ethers is available
+      if (typeof ethers === 'undefined') {
+        console.warn('Ethers not loaded yet, cannot load token info');
+        return;
+      }
+
       try {
         const inputId = tokenType === 'base' ? 'baseToken' : 'quoteToken';
         const tokenAddress = document.getElementById(inputId).value.trim();
@@ -1154,6 +1207,12 @@
     // Check token allowance
     async function checkAllowance() {
       if (!signer || !account) return;
+
+      // Check if ethers is available
+      if (typeof ethers === 'undefined') {
+        console.warn('Ethers not loaded yet, cannot check allowance');
+        return;
+      }
 
       try {
         const cashflow = document.getElementById('cashflow').value || '0';
@@ -1450,64 +1509,82 @@
 
     // Initialize Web3Modal
     async function initWeb3Modal() {
-      // Wait for Web3Modal to be available
-      while (!window.createWeb3Modal || !window.defaultConfig) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+      try {
+        // Wait for Web3Modal to be available with timeout
+        const timeout = 10000; // 10 seconds
+        const startTime = Date.now();
 
-      const projectId = '3fbb6bba6f1de962d911bb5b5c9ddd26'; // WalletConnect project ID
-
-      // Configure metadata
-      const metadata = {
-        name: 'Contango Direct Interface',
-        description: 'Custom Position Builder for Contango',
-        url: window.location.origin,
-        icons: ['https://avatars.githubusercontent.com/u/37784886']
-      };
-
-      // Get all available chains from NETWORKS
-      const chains = Object.values(NETWORKS).map(network => ({
-        chainId: network.chainId,
-        name: network.name,
-        currency: network.nativeCurrency.symbol,
-        explorerUrl: network.explorerUrl,
-        rpcUrl: network.rpcUrl
-      }));
-
-      const ethersConfig = window.defaultConfig({
-        metadata,
-        enableEIP6963: true,
-        enableInjected: true,
-        enableCoinbase: true,
-        rpcUrl: 'https://mainnet.base.org',
-        defaultChainId: 8453
-      });
-
-      web3Modal = window.createWeb3Modal({
-        ethersConfig,
-        chains,
-        projectId,
-        enableAnalytics: false,
-        themeMode: 'dark',
-        themeVariables: {
-          '--w3m-accent': '#00ffaa',
-          '--w3m-border-radius-master': '10px'
+        while (!window.createWeb3Modal || !window.defaultConfig) {
+          if (Date.now() - startTime > timeout) {
+            throw new Error('Web3Modal failed to load. Please refresh the page.');
+          }
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
-      });
 
-      // Subscribe to connection events
-      web3Modal.subscribeProvider(async (newState) => {
-        if (newState.isConnected && newState.address) {
-          await handleWalletConnected(newState);
-        } else if (!newState.isConnected) {
-          handleWalletDisconnected();
+        const projectId = '3fbb6bba6f1de962d911bb5b5c9ddd26'; // WalletConnect project ID
+
+        // Configure metadata
+        const metadata = {
+          name: 'Contango Direct Interface',
+          description: 'Custom Position Builder for Contango',
+          url: window.location.origin,
+          icons: ['https://avatars.githubusercontent.com/u/37784886']
+        };
+
+        // Get all available chains from NETWORKS
+        const chains = Object.values(NETWORKS).map(network => ({
+          chainId: network.chainId,
+          name: network.name,
+          currency: network.nativeCurrency.symbol,
+          explorerUrl: network.explorerUrl,
+          rpcUrl: network.rpcUrl
+        }));
+
+        const ethersConfig = window.defaultConfig({
+          metadata,
+          enableEIP6963: true,
+          enableInjected: true,
+          enableCoinbase: true,
+          rpcUrl: 'https://mainnet.base.org',
+          defaultChainId: 8453
+        });
+
+        web3Modal = window.createWeb3Modal({
+          ethersConfig,
+          chains,
+          projectId,
+          enableAnalytics: false,
+          themeMode: 'dark',
+          themeVariables: {
+            '--w3m-accent': '#00ffaa',
+            '--w3m-border-radius-master': '10px'
+          }
+        });
+
+        console.log('Web3Modal initialized successfully');
+
+        // Subscribe to connection events
+        web3Modal.subscribeProvider(async (newState) => {
+          console.log('Provider state changed:', newState);
+          if (newState.isConnected && newState.address) {
+            await handleWalletConnected(newState);
+          } else if (!newState.isConnected) {
+            handleWalletDisconnected();
+          }
+        });
+
+        // Check if already connected
+        const state = web3Modal.getState();
+        if (state.isConnected && state.address) {
+          console.log('Wallet already connected, restoring connection...');
+          await handleWalletConnected(state);
         }
-      });
 
-      // Check if already connected
-      const state = web3Modal.getState();
-      if (state.isConnected && state.address) {
-        await handleWalletConnected(state);
+        return true;
+      } catch (err) {
+        console.error('Error initializing Web3Modal:', err);
+        showError('Failed to initialize wallet connection: ' + err.message);
+        return false;
       }
     }
 
@@ -1516,6 +1593,12 @@
         const walletProvider = web3Modal.getWalletProvider();
         if (!walletProvider) {
           showError('Unable to get wallet provider');
+          return;
+        }
+
+        // Check if ethers is available
+        if (typeof ethers === 'undefined') {
+          showError('Ethers library not loaded. Please refresh the page.');
           return;
         }
 
@@ -1533,18 +1616,53 @@
         const network = await provider.getNetwork();
         console.log('Connected to network:', network.chainId, 'Account:', account);
 
+        // Get native balance
+        try {
+          const balance = await provider.getBalance(account);
+          const formattedBalance = ethers.utils.formatEther(balance);
+          const nativeCurrency = currentNetwork ? currentNetwork.nativeCurrency.symbol : 'ETH';
+          document.getElementById('walletBalance').textContent =
+            `Balance: ${parseFloat(formattedBalance).toFixed(4)} ${nativeCurrency}`;
+        } catch (balanceErr) {
+          console.error('Error loading balance:', balanceErr);
+          document.getElementById('walletBalance').textContent = 'Balance: --';
+        }
+
         // Check if on correct network
         if (currentNetwork && network.chainId !== currentNetwork.chainId) {
-          showError(`Please switch to ${currentNetwork.name} in your wallet`);
+          showError(`Please switch to ${currentNetwork.name} in your wallet or click below to switch`);
+
+          // Add a button to switch network
+          const errorMsg = document.getElementById('errorMsg');
+          const switchButton = document.createElement('button');
+          switchButton.className = 'approval-btn';
+          switchButton.textContent = `Switch to ${currentNetwork.name}`;
+          switchButton.style.marginTop = '10px';
+          switchButton.onclick = promptNetworkSwitch;
+          errorMsg.appendChild(switchButton);
+
           document.getElementById('submitBtn').disabled = true;
         } else {
           document.getElementById('submitBtn').disabled = false;
+          hideError();
         }
 
         document.getElementById('walletAddress').textContent = formatAddress(account);
         document.getElementById('walletType').textContent = walletName;
         document.getElementById('connectSection').classList.add('hidden');
         document.getElementById('walletSection').classList.remove('hidden');
+
+        // Reset connect button state if still visible
+        const connectBtn = document.querySelector('.connect-btn');
+        if (connectBtn) {
+          connectBtn.disabled = false;
+          connectBtn.textContent = 'Connect Wallet';
+          connectBtn.classList.remove('loading');
+        }
+
+        // Show success message
+        showSuccess(`Connected to ${walletName}!`);
+        setTimeout(hideSuccess, 3000);
 
         // Listen for network changes
         if (walletProvider.on) {
@@ -1595,9 +1713,17 @@
     }
 
     async function connectWallet() {
+      const connectBtn = document.querySelector('.connect-btn');
+      const originalText = connectBtn.textContent;
+
       try {
         hideError();
         hideSuccess();
+
+        // Show loading state
+        connectBtn.disabled = true;
+        connectBtn.textContent = 'Connecting...';
+        connectBtn.classList.add('loading');
 
         if (!currentNetwork) {
           showError('Please select a network first');
@@ -1609,10 +1735,19 @@
           return;
         }
 
+        console.log('Opening Web3Modal...');
         await web3Modal.open();
+
+        // Note: The actual connection happens in the subscribeProvider callback
+        // The button will be re-enabled once the wallet section is shown
       } catch (err) {
         console.error('Error opening wallet modal:', err);
         showError('Failed to open wallet selector: ' + (err.message || err.toString()));
+
+        // Re-enable button on error
+        connectBtn.disabled = false;
+        connectBtn.textContent = originalText;
+        connectBtn.classList.remove('loading');
       }
     }
 
@@ -1628,12 +1763,42 @@
       }
     }
 
-    window.addEventListener('load', async () => {
-      // Load networks first
-      await loadNetworks();
+    // Initialize when all dependencies are ready
+    window.addEventListener('app-ready', async () => {
+      console.log('Initializing application...');
 
-      // Initialize Web3Modal
-      await initWeb3Modal();
+      // Show initializing message
+      const initMsg = document.getElementById('initializingMsg');
+      const connectBtn = document.getElementById('connectBtn');
+      if (initMsg) initMsg.classList.remove('hidden');
+      if (connectBtn) connectBtn.disabled = true;
+
+      try {
+        // Load networks first
+        await loadNetworks();
+
+        // Initialize Web3Modal
+        const success = await initWeb3Modal();
+
+        if (success) {
+          console.log('Application initialized successfully');
+          // Hide initializing message and enable connect button
+          if (initMsg) initMsg.classList.add('hidden');
+          if (connectBtn) connectBtn.disabled = false;
+        } else {
+          throw new Error('Web3Modal initialization failed');
+        }
+      } catch (err) {
+        console.error('Initialization error:', err);
+        showError('Failed to initialize application: ' + err.message);
+
+        // Still hide the message and show the button in case of error
+        if (initMsg) initMsg.classList.add('hidden');
+        if (connectBtn) {
+          connectBtn.disabled = false;
+          connectBtn.textContent = 'Retry Connection';
+        }
+      }
     });
 
     async function openPosition() {
@@ -1645,6 +1810,11 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Processing...';
         submitBtn.classList.add('loading');
+
+        // Check if ethers is available
+        if (typeof ethers === 'undefined') {
+          throw new Error('Ethers library not loaded. Please refresh the page and try again.');
+        }
 
         // Comprehensive wallet and network checks
         if (!signer || !provider || !account) {
@@ -1781,15 +1951,8 @@
 
       } catch (err) {
         console.error('Error:', err);
-        let errorMsg = 'Transaction failed: ';
-        if (err.code === 4001) {
-          errorMsg += 'Transaction rejected by user';
-        } else if (err.reason) {
-          errorMsg += err.reason;
-        } else {
-          errorMsg += err.message || err.toString();
-        }
-        showError(errorMsg);
+        const friendlyError = getUserFriendlyError(err);
+        showError('Transaction failed: ' + friendlyError);
       } finally {
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = false;
@@ -1803,10 +1966,76 @@
       return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
     }
 
+    function copyAddress() {
+      if (!account) return;
+
+      navigator.clipboard.writeText(account).then(() => {
+        // Visual feedback
+        const copyBtn = event.target;
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = '✓';
+        copyBtn.style.background = 'rgba(0, 255, 170, 0.3)';
+
+        setTimeout(() => {
+          copyBtn.textContent = originalText;
+          copyBtn.style.background = '';
+        }, 1500);
+
+        showSuccess('Address copied to clipboard!');
+        setTimeout(hideSuccess, 2000);
+      }).catch(err => {
+        console.error('Failed to copy address:', err);
+        showError('Failed to copy address');
+      });
+    }
+
+    // Get user-friendly error message
+    function getUserFriendlyError(error) {
+      if (!error) return 'An unknown error occurred';
+
+      const message = error.message || error.toString();
+
+      // Common error patterns and their user-friendly messages
+      if (message.includes('user rejected') || message.includes('User denied') || error.code === 4001) {
+        return 'Transaction cancelled by user';
+      }
+
+      if (message.includes('insufficient funds')) {
+        return 'Insufficient funds in your wallet';
+      }
+
+      if (message.includes('network') || message.includes('Network')) {
+        return 'Network error. Please check your connection and try again.';
+      }
+
+      if (message.includes('nonce')) {
+        return 'Transaction error. Please try again or reset your wallet.';
+      }
+
+      if (message.includes('gas')) {
+        return 'Gas estimation failed. You may not have enough funds or the transaction may fail.';
+      }
+
+      if (message.includes('ethers is not defined') || message.includes('Ethers library not loaded')) {
+        return `
+          <div>Failed to load required libraries.</div>
+          <button class="approval-btn" onclick="window.location.reload()" style="margin-top: 10px;">
+            Reload Page
+          </button>
+        `;
+      }
+
+      // Return original message if no match
+      return message;
+    }
+
     function showError(message) {
       const errorMsg = document.getElementById('errorMsg');
       errorMsg.innerHTML = message;
       errorMsg.classList.remove('hidden');
+
+      // Scroll to error message
+      errorMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function hideError() {
