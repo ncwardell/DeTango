@@ -504,6 +504,67 @@
       margin-left: 10px;
     }
 
+    .network-selector {
+      margin-bottom: 20px;
+    }
+
+    .network-select {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(0, 255, 170, 0.3);
+      border-radius: 10px;
+      color: #e0e6ff;
+      font-size: 0.95rem;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .network-select:hover {
+      border-color: rgba(0, 255, 170, 0.5);
+    }
+
+    .network-select:focus {
+      outline: none;
+      border-color: #00ffaa;
+      box-shadow: 0 0 10px rgba(0, 255, 170, 0.3);
+    }
+
+    .network-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: #8b93b5;
+    }
+
+    .network-status {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #00ffaa;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .network-status.disconnected {
+      background: #5a5f7d;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.6;
+        transform: scale(1.1);
+      }
+    }
+
     .hidden {
       display: none;
     }
@@ -520,11 +581,23 @@
 
     <!-- Info Alert -->
     <div class="alert alert-info" style="animation: slideIn 0.6s ease-out;">
-      <strong>🎯 Create Custom Positions:</strong> This interface lets you open positions with any token pair and money market combination on Base. Specify your base token, quote token, and money market to create positions not available in the standard UI.
+      <strong>🎯 Create Custom Positions:</strong> This interface lets you open positions with any token pair and money market combination across multiple chains. Specify your base token, quote token, and money market to create positions not available in the standard UI.
     </div>
 
-    <!-- Wallet Connection -->
+    <!-- Network & Wallet Connection -->
     <div class="card wallet-card">
+      <!-- Network Selector -->
+      <div class="network-selector">
+        <label class="wallet-label" style="margin-bottom: 8px; display: block;">SELECT NETWORK</label>
+        <select id="networkSelect" class="network-select" onchange="switchNetwork()">
+          <option value="">Loading networks...</option>
+        </select>
+        <div class="network-info">
+          <span class="network-status disconnected" id="networkStatus"></span>
+          <span id="networkInfo">Select a network to begin</span>
+        </div>
+      </div>
+
       <div id="connectSection">
         <button class="connect-btn" onclick="connectWallet()">Connect Wallet (MetaMask, Rabby, etc.)</button>
       </div>
@@ -706,48 +779,36 @@
 
     <!-- Example Section -->
     <div class="card" style="animation: slideIn 0.85s ease-out;">
-      <h3 style="color: #00aaff; margin-bottom: 15px; font-size: 1.1rem;">📝 Examples</h3>
+      <h3 style="color: #00aaff; margin-bottom: 15px; font-size: 1.1rem;">📝 Multi-Chain Support</h3>
 
       <div class="example-box">
-        <div style="margin-bottom: 12px; color: #00ffaa; font-weight: 600;">DAI/USDS Stablecoin Loop (Low Risk)</div>
-        <div style="margin-bottom: 10px;"><strong>Base Token (DAI):</strong> <code>0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb</code></div>
-        <div style="margin-bottom: 10px;"><strong>Quote Token (USDS):</strong> <code>0x820C137fa70C8691f0e44Dc420a5e53c168921Dc</code></div>
-        <div style="margin-bottom: 10px;"><strong>Money Market:</strong> Aave</div>
-        <div style="margin-bottom: 10px;"><strong>Strategy:</strong> Leverage stablecoin yield with minimal price risk</div>
-        <div><strong>Use Case:</strong> Earn lending APY on DAI with leverage, minimal liquidation risk</div>
-      </div>
-
-      <div class="example-box" style="margin-top: 15px;">
-        <div style="margin-bottom: 12px; color: #00ffaa; font-weight: 600;">WETH/USDC Long (Standard)</div>
-        <div style="margin-bottom: 10px;"><strong>Base Token (WETH):</strong> <code>0x4200000000000000000000000000000000000006</code></div>
-        <div style="margin-bottom: 10px;"><strong>Quote Token (USDC):</strong> <code>0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913</code></div>
-        <div style="margin-bottom: 10px;"><strong>Money Market:</strong> Aave</div>
-        <div><strong>Use Case:</strong> Leveraged long position on ETH using USDC as collateral</div>
+        <div style="margin-bottom: 12px; color: #00ffaa; font-weight: 600;">Supported Networks</div>
+        <div style="margin-bottom: 8px;"><strong>• Base:</strong> DAI/USDS loops, WETH/USDC, cbETH/USDC</div>
+        <div style="margin-bottom: 8px;"><strong>• Arbitrum One:</strong> WETH/USDC, WBTC/USDC, ARB/USDC</div>
+        <div style="margin-bottom: 8px;"><strong>• Optimism:</strong> WETH/USDC, OP/USDC</div>
+        <div style="margin-bottom: 8px;"><strong>• Polygon:</strong> WETH/USDC, WMATIC/USDC</div>
+        <div style="margin-bottom: 8px;"><strong>• Ethereum:</strong> WETH/USDC, WBTC/USDC</div>
+        <div><strong>• Avalanche:</strong> WAVAX/USDC, WETH/USDC</div>
       </div>
 
       <p style="margin-top: 15px; font-size: 0.85rem; color: #8b93b5;">
-        💡 Tip: Use the preset buttons above to auto-fill these configurations!
+        💡 Tip: Select your network above, then use preset buttons to auto-fill popular token pairs!
       </p>
     </div>
 
     <!-- Contract Info -->
-    <div class="info-card">
-      <div><strong>Contract:</strong> 0xa6a147946FACAc9E0B99824870B36088764f969F</div>
-      <div><strong>Network:</strong> Base Chain (Chain ID: 8453)</div>
-      <div><strong>Function:</strong> trade() via multicall</div>
+    <div class="info-card" id="contractInfo">
+      <div><strong>Select a network to view contract details</strong></div>
     </div>
 
     <!-- Disclaimer -->
     <div class="disclaimer">
-      ⚠️ Advanced users only. Verify all token addresses on BaseScan before trading. This UI charges no fees but understand the protocol mechanics before use.
+      ⚠️ Advanced users only. Verify all token addresses on the block explorer before trading. This UI charges no fees but understand the protocol mechanics before use.
     </div>
   </div>
 
   <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
   <script>
-    const CONTANGO_PROXY = '0xa6a147946FACAc9E0B99824870B36088764f969F';
-    const BASE_CHAIN_ID = 8453;
-
     const CONTANGO_ABI = [
       "function trade(tuple(bytes32 symbol, address trader, uint256 quantity, int256 limitPrice, int256 cashflow, uint8 cashflowCcy) tradeParams) external payable returns (tuple(bytes32 positionId, address trader, uint256 openQuantity, uint256 openCost, int256 collateral, uint256 totalFees, int256 liquidationPrice))",
       "function multicall(bytes[] calldata data) external payable returns (bytes[] memory results)"
@@ -761,33 +822,11 @@
       "function allowance(address owner, address spender) view returns (uint256)"
     ];
 
-    // Token presets on Base
-    const PRESETS = {
-      'dai-usds': {
-        name: 'DAI/USDS Loop',
-        baseToken: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb', // DAI
-        quoteToken: '0x820C137fa70C8691f0e44Dc420a5e53c168921Dc', // USDS (Sky Dollar)
-        moneyMarket: 'aave',
-        side: 'long',
-        description: 'Stablecoin leverage loop'
-      },
-      'weth-usdc': {
-        name: 'WETH/USDC',
-        baseToken: '0x4200000000000000000000000000000000000006', // WETH
-        quoteToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC
-        moneyMarket: 'aave',
-        side: 'long',
-        description: 'ETH long position'
-      },
-      'cbeth-usdc': {
-        name: 'cbETH/USDC',
-        baseToken: '0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22', // cbETH
-        quoteToken: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC
-        moneyMarket: 'aave',
-        side: 'long',
-        description: 'Coinbase ETH long'
-      }
-    };
+    // Network configuration - loaded from JSON
+    let NETWORKS = {};
+    let currentNetwork = null;
+    let CONTANGO_PROXY = '';
+    let PRESETS = {};
 
     let provider = null;
     let signer = null;
@@ -798,6 +837,160 @@
     let baseTokenInfo = { balance: '0', decimals: 18, symbol: '', address: '' };
     let quoteTokenInfo = { balance: '0', decimals: 18, symbol: '', address: '' };
     let currentPrice = 1; // Approximate price (base/quote)
+
+    // Load network configuration from JSON
+    async function loadNetworks() {
+      try {
+        const response = await fetch('network-config.json');
+        NETWORKS = await response.json();
+
+        // Populate network selector
+        const networkSelect = document.getElementById('networkSelect');
+        networkSelect.innerHTML = '<option value="">Select Network...</option>';
+
+        Object.keys(NETWORKS).forEach(networkKey => {
+          const network = NETWORKS[networkKey];
+          const option = document.createElement('option');
+          option.value = networkKey;
+          option.textContent = `${network.name} (Chain ${network.chainId})`;
+          networkSelect.appendChild(option);
+        });
+
+        // Default to Base
+        networkSelect.value = 'base';
+        await switchNetwork();
+
+      } catch (err) {
+        console.error('Error loading networks:', err);
+        showError('Failed to load network configuration');
+      }
+    }
+
+    // Switch to selected network
+    async function switchNetwork() {
+      const networkKey = document.getElementById('networkSelect').value;
+
+      if (!networkKey || !NETWORKS[networkKey]) {
+        document.getElementById('networkInfo').textContent = 'Select a network to begin';
+        document.getElementById('networkStatus').className = 'network-status disconnected';
+        return;
+      }
+
+      currentNetwork = NETWORKS[networkKey];
+      CONTANGO_PROXY = currentNetwork.contracts.maestroProxy;
+      PRESETS = currentNetwork.presets || {};
+
+      // Update network info display
+      document.getElementById('networkInfo').textContent =
+        `${currentNetwork.name} - Chain ID: ${currentNetwork.chainId}`;
+      document.getElementById('networkStatus').className = 'network-status';
+
+      // Update presets UI
+      updatePresetsUI();
+
+      // Update contract info display
+      updateContractInfo();
+
+      // Clear form when switching networks
+      clearForm();
+
+      // If wallet is connected, check if we need to switch network
+      if (provider && account) {
+        const network = await provider.getNetwork();
+        if (network.chainId !== currentNetwork.chainId) {
+          await promptNetworkSwitch();
+        } else {
+          // Reload token info if addresses are set
+          const baseToken = document.getElementById('baseToken').value;
+          const quoteToken = document.getElementById('quoteToken').value;
+          if (baseToken && ethers.utils.isAddress(baseToken)) {
+            loadTokenInfo('base');
+          }
+          if (quoteToken && ethers.utils.isAddress(quoteToken)) {
+            loadTokenInfo('quote');
+          }
+        }
+      }
+    }
+
+    // Prompt user to switch network in wallet
+    async function promptNetworkSwitch() {
+      if (!currentNetwork) return;
+
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: `0x${currentNetwork.chainId.toString(16)}` }],
+        });
+
+        // Reinitialize provider after network switch
+        provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+        signer = provider.getSigner();
+
+        showSuccess(`Switched to ${currentNetwork.name}`);
+      } catch (switchError) {
+        // This error code indicates that the chain has not been added to MetaMask
+        if (switchError.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: `0x${currentNetwork.chainId.toString(16)}`,
+                chainName: currentNetwork.name,
+                nativeCurrency: currentNetwork.nativeCurrency,
+                rpcUrls: [currentNetwork.rpcUrl],
+                blockExplorerUrls: [currentNetwork.explorerUrl]
+              }]
+            });
+            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+            signer = provider.getSigner();
+          } catch (addError) {
+            showError('Failed to add network. Please add it manually.');
+            return;
+          }
+        } else {
+          showError('Failed to switch network: ' + switchError.message);
+          return;
+        }
+      }
+    }
+
+    // Update presets UI based on current network
+    function updatePresetsUI() {
+      const presetButtonsContainer = document.querySelector('.preset-buttons');
+      if (!presetButtonsContainer) return;
+
+      presetButtonsContainer.innerHTML = '';
+
+      // Add preset buttons for current network
+      Object.keys(PRESETS).forEach(presetKey => {
+        const button = document.createElement('button');
+        button.className = 'preset-btn';
+        button.textContent = PRESETS[presetKey].name;
+        button.onclick = () => loadPreset(presetKey);
+        presetButtonsContainer.appendChild(button);
+      });
+
+      // Add clear button
+      const clearButton = document.createElement('button');
+      clearButton.className = 'preset-btn';
+      clearButton.textContent = 'Clear All';
+      clearButton.onclick = clearForm;
+      presetButtonsContainer.appendChild(clearButton);
+    }
+
+    // Update contract info display
+    function updateContractInfo() {
+      const contractInfoDiv = document.getElementById('contractInfo');
+      if (!contractInfoDiv || !currentNetwork) return;
+
+      contractInfoDiv.innerHTML = `
+        <div><strong>Contract:</strong> ${currentNetwork.contracts.maestroProxy}</div>
+        <div><strong>Network:</strong> ${currentNetwork.name} (Chain ID: ${currentNetwork.chainId})</div>
+        <div><strong>Explorer:</strong> <a href="${currentNetwork.explorerUrl}" target="_blank" rel="noopener noreferrer" style="color: #00ffaa;">${currentNetwork.explorerUrl}</a></div>
+        <div><strong>Function:</strong> trade() via multicall</div>
+      `;
+    }
 
     // Load preset configuration
     function loadPreset(presetKey) {
@@ -934,9 +1127,10 @@
         const maxApproval = ethers.constants.MaxUint256;
         const tx = await tokenContract.approve(CONTANGO_PROXY, maxApproval);
 
+        const explorerUrl = currentNetwork ? currentNetwork.explorerUrl : 'https://basescan.org';
         showSuccess(`
           <div class="tx-label">APPROVAL SUBMITTED</div>
-          <a href="https://basescan.org/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
+          <a href="${explorerUrl}/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
             ${tx.hash}
           </a>
           <div style="margin-top: 10px; font-size: 0.85rem;">Waiting for confirmation...</div>
@@ -1064,6 +1258,10 @@
     }
 
     window.addEventListener('load', async () => {
+      // Load networks first
+      await loadNetworks();
+
+      // Then check if wallet is already connected
       if (typeof window.ethereum !== 'undefined') {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         if (accounts.length > 0) {
@@ -1094,50 +1292,28 @@
           return;
         }
 
+        if (!currentNetwork) {
+          showError('Please select a network first');
+          return;
+        }
+
         // Detect wallet type
         walletName = await detectWalletType();
 
         provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-        
+
         // Request accounts
         const accounts = await provider.send('eth_requestAccounts', []);
         const network = await provider.getNetwork();
 
-        if (network.chainId !== BASE_CHAIN_ID) {
-          try {
-            await window.ethereum.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: `0x${BASE_CHAIN_ID.toString(16)}` }],
-            });
-            // Reinitialize provider after network switch
-            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-          } catch (switchError) {
-            if (switchError.code === 4902) {
-              // Try to add the network
-              try {
-                await window.ethereum.request({
-                  method: 'wallet_addEthereumChain',
-                  params: [{
-                    chainId: `0x${BASE_CHAIN_ID.toString(16)}`,
-                    chainName: 'Base',
-                    nativeCurrency: {
-                      name: 'Ethereum',
-                      symbol: 'ETH',
-                      decimals: 18
-                    },
-                    rpcUrls: ['https://mainnet.base.org'],
-                    blockExplorerUrls: ['https://basescan.org']
-                  }]
-                });
-                provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-              } catch (addError) {
-                showError('Failed to add Base network. Please add it manually.');
-                return;
-              }
-            } else {
-              showError('Failed to switch to Base network: ' + switchError.message);
-              return;
-            }
+        // Check if wallet is on the correct network
+        if (network.chainId !== currentNetwork.chainId) {
+          await promptNetworkSwitch();
+          // Re-check after switch attempt
+          const newNetwork = await provider.getNetwork();
+          if (newNetwork.chainId !== currentNetwork.chainId) {
+            showError(`Please switch to ${currentNetwork.name} in your wallet`);
+            return;
           }
         }
 
@@ -1247,20 +1423,21 @@
         };
 
         const tx = await contract.trade(tradeParams);
-        
+
+        const explorerUrl = currentNetwork ? currentNetwork.explorerUrl : 'https://basescan.org';
         showSuccess(`
           <div class="tx-label">TRANSACTION SUBMITTED</div>
-          <a href="https://basescan.org/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
+          <a href="${explorerUrl}/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
             ${tx.hash}
           </a>
           <div style="margin-top: 10px; font-size: 0.85rem;">Waiting for confirmation...</div>
         `);
 
         await tx.wait();
-        
+
         showSuccess(`
           <div class="tx-label">POSITION OPENED!</div>
-          <a href="https://basescan.org/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
+          <a href="${explorerUrl}/tx/${tx.hash}" target="_blank" rel="noopener noreferrer" class="tx-link">
             ${tx.hash}
           </a>
           <div style="margin-top: 10px; font-size: 0.85rem;">Your custom position is now active.</div>
