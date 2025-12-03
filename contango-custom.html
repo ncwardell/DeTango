@@ -979,24 +979,31 @@
 
     // Prompt user to switch network in wallet
     async function promptNetworkSwitch() {
-      if (!currentNetwork) return;
+      if (!currentNetwork || !web3Modal) return;
 
       try {
-        await window.ethereum.request({
+        const walletProvider = web3Modal.getWalletProvider();
+        if (!walletProvider) {
+          showError('Please connect your wallet first');
+          return;
+        }
+
+        await walletProvider.request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: `0x${currentNetwork.chainId.toString(16)}` }],
         });
 
         // Reinitialize provider after network switch
-        provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+        provider = new ethers.providers.Web3Provider(walletProvider, "any");
         signer = provider.getSigner();
 
         showSuccess(`Switched to ${currentNetwork.name}`);
       } catch (switchError) {
-        // This error code indicates that the chain has not been added to MetaMask
+        // This error code indicates that the chain has not been added to the wallet
         if (switchError.code === 4902) {
           try {
-            await window.ethereum.request({
+            const walletProvider = web3Modal.getWalletProvider();
+            await walletProvider.request({
               method: 'wallet_addEthereumChain',
               params: [{
                 chainId: `0x${currentNetwork.chainId.toString(16)}`,
@@ -1006,8 +1013,9 @@
                 blockExplorerUrls: [currentNetwork.explorerUrl]
               }]
             });
-            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+            provider = new ethers.providers.Web3Provider(walletProvider, "any");
             signer = provider.getSigner();
+            showSuccess(`Added and switched to ${currentNetwork.name}`);
           } catch (addError) {
             showError('Failed to add network. Please add it manually.');
             return;
@@ -1506,6 +1514,11 @@
     async function handleWalletConnected(state) {
       try {
         const walletProvider = web3Modal.getWalletProvider();
+        if (!walletProvider) {
+          showError('Unable to get wallet provider');
+          return;
+        }
+
         provider = new ethers.providers.Web3Provider(walletProvider, "any");
         signer = provider.getSigner();
         account = state.address;
@@ -1518,6 +1531,7 @@
         if (walletProvider.isWalletConnect) walletName = 'WalletConnect';
 
         const network = await provider.getNetwork();
+        console.log('Connected to network:', network.chainId, 'Account:', account);
 
         // Check if on correct network
         if (currentNetwork && network.chainId !== currentNetwork.chainId) {
@@ -1531,6 +1545,26 @@
         document.getElementById('walletType').textContent = walletName;
         document.getElementById('connectSection').classList.add('hidden');
         document.getElementById('walletSection').classList.remove('hidden');
+
+        // Listen for network changes
+        if (walletProvider.on) {
+          walletProvider.on('chainChanged', async (chainId) => {
+            console.log('Network changed to:', chainId);
+            // Reload the page to reset state
+            window.location.reload();
+          });
+
+          walletProvider.on('accountsChanged', async (accounts) => {
+            console.log('Accounts changed:', accounts);
+            if (accounts.length === 0) {
+              // User disconnected
+              handleWalletDisconnected();
+            } else {
+              // Account changed - reload to reset state
+              window.location.reload();
+            }
+          });
+        }
 
         // Load token info if addresses are already filled
         const baseToken = document.getElementById('baseToken').value;
@@ -1612,9 +1646,30 @@
         submitBtn.textContent = 'Processing...';
         submitBtn.classList.add('loading');
 
-        if (!signer) {
+        // Comprehensive wallet and network checks
+        if (!signer || !provider || !account) {
           throw new Error('Please connect your wallet');
         }
+
+        if (!currentNetwork) {
+          throw new Error('Please select a network');
+        }
+
+        if (!CONTANGO_PROXY) {
+          throw new Error('Contract address not configured for this network');
+        }
+
+        // Verify we're on the correct network
+        const network = await provider.getNetwork();
+        if (network.chainId !== currentNetwork.chainId) {
+          throw new Error(`Please switch to ${currentNetwork.name} (Chain ID: ${currentNetwork.chainId})`);
+        }
+
+        console.log('Opening position with:', {
+          account,
+          network: network.chainId,
+          contract: CONTANGO_PROXY
+        });
 
         // Check if approval is needed first
         const cashflow = document.getElementById('cashflow').value;
