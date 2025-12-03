@@ -1,0 +1,59 @@
+{
+  "base": {
+    "moonwell": [
+      "ETH/USDC",
+      "wstETH/USDC",
+      "rETH/USDC",
+      "cbETH/USDC",
+      "weETH/USDC",
+      "DAI/USDC",
+      "USDbC/USDC",
+      "ETH/USDbC",
+      "cbETH/USDbC",
+      "ETH/EURC",
+      "wstETH/EURC",
+      "cbBTC/EURC",
+      "EURC/USDC",
+      "EURC/DAI",
+      "ETH/DAI",
+      "wstETH/DAI",
+      "rETH/DAI",
+      "cbETH/DAI",
+      "USDbC/DAI",
+      "wstETH/ETH",
+      "rETH/ETH",
+      "cbETH/ETH",
+      "weETH/ETH",
+      "wrsETH/ETH",
+      "cbBTC/USDC",
+      "wstETH/cbBTC",
+      "ETH/cbBTC",
+      "cbETH/rETH",
+      "weETH/wstETH",
+      "weETH/cbETH"
+    ],
+    "aave": [],
+    "compound": [],
+    "seamless": [],
+    "sonne": []
+  },
+  "arbitrum": {
+    "aave": [],
+    "compound": []
+  },
+  "optimism": {
+    "aave": [],
+    "sonne": []
+  },
+  "polygon": {
+    "aave": [],
+    "compound": []
+  },
+  "mainnet": {
+    "aave": [],
+    "compound": []
+  },
+  "avalanche": {
+    "aave": []
+  }
+}
