@@ -833,6 +833,16 @@
         </div>
       </div>
 
+      <!-- Instrument Check -->
+      <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <button id="checkInstrumentBtn" class="preset-btn" onclick="checkInstrument()" style="padding: 12px; font-size: 0.9rem;">
+          🔍 Check if Exists
+        </button>
+        <button class="preset-btn" onclick="window.open('https://app.contango.xyz', '_blank')" style="padding: 12px; font-size: 0.9rem; background: rgba(0, 212, 255, 0.1); border-color: rgba(0, 212, 255, 0.3); color: #00d4ff;">
+          📋 Browse Available
+        </button>
+      </div>
+
       <button id="submitBtn" class="submit-btn" onclick="openPosition()" disabled>
         Execute Trade
       </button>
@@ -840,6 +850,7 @@
       <!-- Error/Success Messages -->
       <div id="errorMsg" class="alert alert-error hidden"></div>
       <div id="successMsg" class="alert alert-success hidden"></div>
+      <div id="instrumentInfo" class="alert alert-info hidden"></div>
     </div>
 
     <!-- Example Section -->
@@ -859,6 +870,28 @@
       <p style="margin-top: 15px; font-size: 0.85rem; color: #8b93b5;">
         💡 Tip: Select your network above, then use preset buttons to auto-fill popular token pairs!
       </p>
+
+      <div style="margin-top: 20px; padding: 15px; background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px;">
+        <div style="font-weight: 600; color: #00d4ff; margin-bottom: 8px;">🔍 Finding Available Instruments</div>
+        <div style="font-size: 0.8rem; color: #8b93b5; line-height: 1.5;">
+          <p style="margin-bottom: 8px;">To see all available trading pairs:</p>
+          <ol style="margin-left: 20px; margin-bottom: 8px;">
+            <li>Visit <a href="https://app.contango.xyz" target="_blank" style="color: #00ffaa;">app.contango.xyz</a></li>
+            <li>Select your network (Base, Arbitrum, etc.)</li>
+            <li>Browse the available trading pairs</li>
+            <li>Copy the token addresses and use them here</li>
+          </ol>
+          <p style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0, 212, 255, 0.2);">
+            <strong>Alternative methods:</strong><br>
+            • Check Contango's <a href="https://docs.contango.xyz" target="_blank" style="color: #00ffaa;">documentation</a> for supported instruments<br>
+            • Query Contango's subgraph on The Graph Network<br>
+            • Use the "Browse Available" button above to open the official app
+          </p>
+          <p style="margin-top: 8px; padding: 8px; background: rgba(255, 200, 0, 0.05); border-radius: 6px; font-size: 0.75rem;">
+            ⚠️ <strong>Note:</strong> This interface cannot enumerate all instruments programmatically. Instruments must be pre-created by the Contango team before they can be traded.
+          </p>
+        </div>
+      </div>
     </div>
 
     <!-- Contract Info -->
@@ -955,7 +988,8 @@
   <script>
     const CONTANGO_ABI = [
       "function trade(tuple(bytes32 symbol, address trader, uint256 quantity, int256 limitPrice, int256 cashflow, uint8 cashflowCcy) tradeParams) external payable returns (tuple(bytes32 positionId, address trader, uint256 openQuantity, uint256 openCost, int256 collateral, uint256 totalFees, int256 liquidationPrice))",
-      "function multicall(bytes[] calldata data) external payable returns (bytes[] memory results)"
+      "function multicall(bytes[] calldata data) external payable returns (bytes[] memory results)",
+      "function instrument(bytes32 symbol) external view returns (tuple(bytes32 symbol, address base, address quote, uint256 baseUnit, uint256 quoteUnit, address moneyMarket, address feeModel))"
     ];
 
     const ERC20_ABI = [
@@ -1808,6 +1842,116 @@
       }
     }
 
+    // Check if instrument exists in Contango
+    async function checkInstrument() {
+      try {
+        const instrumentInfoDiv = document.getElementById('instrumentInfo');
+        const checkBtn = document.getElementById('checkInstrumentBtn');
+        const originalBtnText = checkBtn.textContent;
+
+        checkBtn.disabled = true;
+        checkBtn.textContent = 'Checking...';
+        checkBtn.classList.add('loading');
+
+        hideError();
+        hideSuccess();
+        instrumentInfoDiv.classList.add('hidden');
+
+        // Check if ethers is available
+        if (typeof ethers === 'undefined') {
+          throw new Error('Ethers library not loaded. Please refresh the page.');
+        }
+
+        // Validate inputs
+        const baseToken = document.getElementById('baseToken').value.trim();
+        const quoteToken = document.getElementById('quoteToken').value.trim();
+        const moneyMarket = document.getElementById('moneyMarket').value;
+
+        if (!baseToken || !quoteToken || !moneyMarket) {
+          throw new Error('Please fill in base token, quote token, and money market first');
+        }
+
+        if (!ethers.utils.isAddress(baseToken) || !ethers.utils.isAddress(quoteToken)) {
+          throw new Error('Invalid token addresses');
+        }
+
+        // Load token info if not already loaded
+        if (!baseTokenInfo.symbol || !quoteTokenInfo.symbol) {
+          showSuccess('Loading token information...');
+          await Promise.all([
+            loadTokenInfo('base'),
+            loadTokenInfo('quote')
+          ]);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        // Generate symbol
+        const marketId = moneyMarket === 'custom' ?
+          document.getElementById('customMarketId').value :
+          moneyMarket.toUpperCase();
+
+        const baseSymbol = baseTokenInfo.symbol || baseToken.substring(2, 8).toUpperCase();
+        const quoteSymbol = quoteTokenInfo.symbol || quoteToken.substring(2, 8).toUpperCase();
+        const symbolString = `${baseSymbol}/${quoteSymbol}-${marketId}`;
+        const symbolBytes32 = ethers.utils.formatBytes32String(symbolString);
+
+        console.log('Checking instrument:', symbolString);
+
+        // Query the contract
+        if (!provider || !CONTANGO_PROXY) {
+          throw new Error('Please connect your wallet first');
+        }
+
+        const contract = new ethers.Contract(CONTANGO_PROXY, CONTANGO_ABI, provider);
+
+        try {
+          const instrumentData = await contract.instrument(symbolBytes32);
+
+          console.log('Instrument found:', instrumentData);
+
+          // Display instrument info
+          instrumentInfoDiv.innerHTML = `
+            <div><strong>✅ Instrument EXISTS!</strong></div>
+            <div style="margin-top: 10px; font-size: 0.85rem;">
+              <div><strong>Symbol:</strong> ${symbolString}</div>
+              <div><strong>Base Token:</strong> ${instrumentData.base}</div>
+              <div><strong>Quote Token:</strong> ${instrumentData.quote}</div>
+              <div><strong>Money Market:</strong> ${instrumentData.moneyMarket}</div>
+              <div style="margin-top: 8px; color: #00ffaa;">This instrument is ready to trade!</div>
+            </div>
+          `;
+          instrumentInfoDiv.classList.remove('hidden');
+
+        } catch (contractError) {
+          console.error('Instrument lookup error:', contractError);
+
+          // If the call reverts, the instrument doesn't exist
+          instrumentInfoDiv.innerHTML = `
+            <div><strong>❌ Instrument NOT FOUND</strong></div>
+            <div style="margin-top: 10px; font-size: 0.85rem;">
+              <div><strong>Symbol:</strong> ${symbolString}</div>
+              <div style="margin-top: 8px; color: #ffc857;">
+                This instrument doesn't exist in Contango yet. You cannot create new instruments through this interface - they must be created by the Contango team.
+              </div>
+              <div style="margin-top: 8px;">
+                Try using one of the preset configurations, or check Contango's official app for available trading pairs.
+              </div>
+            </div>
+          `;
+          instrumentInfoDiv.classList.remove('hidden');
+        }
+
+      } catch (err) {
+        console.error('Check instrument error:', err);
+        showError('Failed to check instrument: ' + (err.message || err.toString()));
+      } finally {
+        const checkBtn = document.getElementById('checkInstrumentBtn');
+        checkBtn.disabled = false;
+        checkBtn.textContent = '🔍 Check if Instrument Exists';
+        checkBtn.classList.remove('loading');
+      }
+    }
+
     // Initialize when all dependencies are ready
     window.addEventListener('app-ready', async () => {
       console.log('Initializing application...');
@@ -2107,7 +2251,10 @@
       }
 
       if (message.includes('gas')) {
-        return 'Gas estimation failed. You may not have enough funds or the transaction may fail.';
+        return `
+          <div>Gas estimation failed. This usually means the instrument doesn't exist.</div>
+          <div style="margin-top: 8px;">Click "Check if Instrument Exists" to verify the instrument is available in Contango.</div>
+        `;
       }
 
       if (message.includes('ethers is not defined') || message.includes('Ethers library not loaded')) {
@@ -2141,6 +2288,13 @@
 
     function hideSuccess() {
       document.getElementById('successMsg').classList.add('hidden');
+    }
+
+    function hideInstrumentInfo() {
+      const infoDiv = document.getElementById('instrumentInfo');
+      if (infoDiv) {
+        infoDiv.classList.add('hidden');
+      }
     }
   </script>
 </body>
